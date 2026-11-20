@@ -100,7 +100,7 @@ def print_setlists(data: dict) -> None:
         place = ", ".join(
             p for p in (venue.get("name"), city.get("name"), city.get("country", {}).get("name")) if p
         )
-        print(f"* {s.get('eventDate')}  {place}")
+        print(f"\n* {s.get('eventDate')}  {place}")
         if s.get("tour"):
             print(f"    tour: {s['tour'].get('name')}")
 
@@ -144,8 +144,22 @@ def run_search_artist(artist_name: str) -> None:
         print(f"    url:      {a.get('url')}")
 
 
+def print_banner(title: str, *details: str) -> None:
+    """Print a framed multi-line banner so each step stands out in the console."""
+    lines = [title, *details]
+    width = max(len(line) for line in lines) + 4
+    print()
+    print("#" * (width + 2))
+    print("#" + " " * width + "#")
+    for line in lines:
+        print("#  " + line.ljust(width - 2) + "#")
+    print("#" + " " * width + "#")
+    print("#" * (width + 2))
+    print()
+
+
 def run_get_setlist(mbid: str, page: int = 1) -> None:
-    print(f"Setlists for artist {mbid}:")
+    print_banner("GET ARTIST SETLISTS", f"Artist MBID: {mbid}", f"Page:        {page}")
     try:
         setlists = get_artist_setlists(mbid, page)
     except Exception as e:
