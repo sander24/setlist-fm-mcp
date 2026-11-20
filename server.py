@@ -14,7 +14,7 @@ from typing import Annotated, Any, Callable
 from mcp.server.mcpserver import MCPServer
 from pydantic import Field
 
-from setlist_fm_mcp import get_setlists_by_artist_name as _get_setlists_by_artist_name
+from setlist_fm_client import get_setlists_by_artist_name as _get_setlists_by_artist_name
 
 # stdout carries the MCP protocol; logging goes to stderr.
 logging.basicConfig(level=logging.INFO, format="%(name)s: %(message)s")

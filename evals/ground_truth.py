@@ -17,11 +17,11 @@ from pathlib import Path
 
 EVALS_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(EVALS_DIR.parent))
-# Must be set before setlist_fm_mcp is imported: it configures its cache at import time.
+# Must be set before setlist_fm_client is imported: it configures its cache at import time.
 os.environ["SETLISTFM_CACHE_PATH"] = str(EVALS_DIR / "fixtures" / "setlistfm")
 os.environ["SETLISTFM_CACHE_FROZEN"] = "1"
 
-from setlist_fm_mcp import get_setlists_by_artist_name  # noqa: E402
+from setlist_fm_client import get_setlists_by_artist_name  # noqa: E402
 
 
 def main() -> None:

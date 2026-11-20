@@ -5,7 +5,7 @@ import json
 import logging
 import sys
 
-from setlist_fm_mcp import get_setlists_by_artist_mbid, get_setlists_by_artist_name, search_artists
+from setlist_fm_client import get_setlists_by_artist_mbid, get_setlists_by_artist_name, search_artists
 
 VENNASKOND_MBID = "06ec7d7a-c91d-4e50-8f98-83ac674a3344"
 
@@ -121,7 +121,7 @@ def run_get_setlists_by_artist_name(artist_name: str, page: int = 1) -> None:
 def main() -> None:
     # Show the client's "GET ... (from cache/API)" lines.
     logging.basicConfig(level=logging.WARNING, format="%(message)s")
-    logging.getLogger("setlist_fm_mcp").setLevel(logging.INFO)
+    logging.getLogger("setlist_fm_client").setLevel(logging.INFO)
 
     # run_search_artist(sys.argv[1] if len(sys.argv) > 1 else "Vennaskond")
     # run_get_setlist(sys.argv[1] if len(sys.argv) > 1 else VENNASKOND_MBID)
