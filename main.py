@@ -5,7 +5,7 @@ import json
 import logging
 import sys
 
-from setlist_fm_mcp import get_artist_setlists, search_artists
+from setlist_fm_mcp import get_setlists_by_artist_mbid, get_setlists_by_artist_name, search_artists
 
 VENNASKOND_MBID = "06ec7d7a-c91d-4e50-8f98-83ac674a3344"
 
@@ -83,7 +83,7 @@ def run_search_artist(artist_name: str) -> None:
 def run_get_setlist(mbid: str, page: int = 1) -> None:
     print_banner("GET ARTIST SETLISTS", f"Artist MBID: {mbid}", f"Page:        {page}")
     try:
-        setlists = get_artist_setlists(mbid, page)
+        setlists = get_setlists_by_artist_mbid(mbid, page)
     except Exception as e:
         print(f"Request failed: {e}", file=sys.stderr)
         sys.exit(1)
@@ -94,13 +94,38 @@ def run_get_setlist(mbid: str, page: int = 1) -> None:
         print_setlists(setlists)
 
 
+def run_get_setlists_by_artist_name(artist_name: str, page: int = 1) -> None:
+    print_banner("GET SETLISTS BY ARTIST NAME", f"Artist name: {artist_name}", f"Page:        {page}")
+    try:
+        result = get_setlists_by_artist_name(artist_name, page)
+    except Exception as e:
+        print(f"Request failed: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    if result is None:
+        print(f"No artists found for '{artist_name}'.")
+        return
+
+    artist = result["artist"]
+    print(f"Matched artist: {artist.get('name')} ({artist.get('mbid')})")
+    for other in result["otherMatches"]:
+        print(f"  other match:  {other.get('name')} ({other.get('mbid')})")
+    print()
+
+    if result["setlists"] is None:
+        print("No setlists found.")
+    else:
+        print_setlists(result["setlists"])
+
+
 def main() -> None:
     # Show the client's "GET ... (from cache/API)" lines.
     logging.basicConfig(level=logging.WARNING, format="%(message)s")
     logging.getLogger("setlist_fm_mcp").setLevel(logging.INFO)
 
     # run_search_artist(sys.argv[1] if len(sys.argv) > 1 else "Vennaskond")
-    run_get_setlist(sys.argv[1] if len(sys.argv) > 1 else VENNASKOND_MBID)
+    # run_get_setlist(sys.argv[1] if len(sys.argv) > 1 else VENNASKOND_MBID)
+    run_get_setlists_by_artist_name(sys.argv[1] if len(sys.argv) > 1 else "Vennaskond")
 
 
 if __name__ == "__main__":

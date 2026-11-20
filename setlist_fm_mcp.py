@@ -79,7 +79,36 @@ def search_artists(artist_name: str, page: int = 1, sort: str = "relevance") -> 
     return _get("/search/artists", {"artistName": artist_name, "p": page, "sort": sort})
 
 
-def get_artist_setlists(mbid: str, page: int = 1) -> dict | None:
+def get_setlists_by_artist_mbid(mbid: str, page: int = 1) -> dict | None:
     """Return a page of setlists for the artist with the given MusicBrainz ID,
     or None if the artist/page has no setlists."""
     return _get(f"/artist/{mbid}/setlists", {"p": page})
+
+
+def get_setlists_by_artist_name(artist_name: str, page: int = 1) -> dict | None:
+    """Look up an artist by name and return a page of their setlists.
+
+    Picks the search result whose name matches exactly (case-insensitive),
+    otherwise the most relevant one. Returns None if no artist was found.
+
+    Result:
+        {
+            "artist": {...},          # the artist the setlists belong to
+            "otherMatches": [...],    # other search results, for disambiguation
+            "setlists": {...} | None, # get_setlists_by_artist_mbid() result
+        }
+    """
+    found = search_artists(artist_name)
+    artists = (found or {}).get("artist", [])
+    if not artists:
+        return None
+
+    artist = next(
+        (a for a in artists if a.get("name", "").casefold() == artist_name.casefold()),
+        artists[0],
+    )
+    return {
+        "artist": artist,
+        "otherMatches": [a for a in artists if a is not artist],
+        "setlists": get_setlists_by_artist_mbid(artist["mbid"], page),
+    }
