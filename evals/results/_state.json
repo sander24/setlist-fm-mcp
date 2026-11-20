@@ -1,0 +1,19 @@
+{
+  "metrics": [
+    {
+      "id": "correct",
+      "label": "Correct",
+      "kind": "binary"
+    },
+    {
+      "id": "tool_ok",
+      "label": "Tool args OK",
+      "kind": "binary"
+    },
+    {
+      "id": "compact_ok",
+      "label": "Compact mode",
+      "kind": "binary"
+    }
+  ]
+}

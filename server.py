@@ -4,6 +4,7 @@
 import functools
 import json
 import logging
+import os
 import time
 from datetime import datetime, timezone
 from logging.handlers import RotatingFileHandler
@@ -20,7 +21,8 @@ logging.basicConfig(level=logging.INFO, format="%(name)s: %(message)s")
 
 # Tool calls (arguments + exact JSON returned) go to a separate JSON Lines file:
 #   tail -f logs/tool_calls.jsonl | jq .
-LOG_DIR = Path(__file__).resolve().parent / "logs"
+# SETLISTFM_LOG_DIR redirects it (the eval runner uses this to keep one log per run).
+LOG_DIR = Path(os.environ.get("SETLISTFM_LOG_DIR", Path(__file__).resolve().parent / "logs"))
 LOG_DIR.mkdir(exist_ok=True)
 tool_call_log = logging.getLogger("tool_calls")
 tool_call_log.setLevel(logging.INFO)

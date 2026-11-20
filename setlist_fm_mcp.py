@@ -24,20 +24,30 @@ if not API_KEY:
     raise RuntimeError("SETLISTFM_API_KEY is not set. Copy .env.example to .env and add your key.")
 
 BASE_URL = "https://api.setlist.fm/rest/1.0"
-CACHE_PATH = Path(__file__).resolve().parent / ".cache" / "setlistfm"
+# SETLISTFM_CACHE_PATH points at another cache file (e.g. the eval fixtures).
+# SETLISTFM_CACHE_FROZEN=1 makes cached responses never expire, so repeated runs see
+# the same data; anything not yet cached is fetched once and then frozen too.
+CACHE_PATH = Path(
+    os.environ.get("SETLISTFM_CACHE_PATH", Path(__file__).resolve().parent / ".cache" / "setlistfm")
+)
+CACHE_FROZEN = os.environ.get("SETLISTFM_CACHE_FROZEN") == "1"
 
 session = requests_cache.CachedSession(
     str(CACHE_PATH),
     backend="sqlite",
-    expire_after=timedelta(days=1),  # default for anything not matched below
-    urls_expire_after={
+    expire_after=requests_cache.NEVER_EXPIRE if CACHE_FROZEN else timedelta(days=1),
+    urls_expire_after=None
+    if CACHE_FROZEN
+    else {
         "api.setlist.fm/rest/1.0/search/artists*": timedelta(days=7),
         "api.setlist.fm/rest/1.0/artist/*/setlists*": timedelta(days=1),
         "api.setlist.fm/rest/1.0/setlist/*": timedelta(days=30),
         "api.setlist.fm/rest/1.0/artist/*": timedelta(days=30),
     },
     allowable_codes=(200, 404),  # also cache "not found" to avoid repeat misses
-    # The API key is sent as a header, so it is not part of the cache key.
+    # Redact the API key header from stored requests (and keep it out of the cache key),
+    # so cache files never contain the key.
+    ignored_parameters=["x-api-key"],
 )
 # Retry rate-limited (429) and transient server errors with exponential backoff.
 # Failed responses are never cached (not in allowable_codes).
