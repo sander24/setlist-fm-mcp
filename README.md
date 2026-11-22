@@ -120,8 +120,9 @@ fails the attempt instead of fetching live data.
 |---|---|---|
 | The National, countries in 2025 | No 2025 shows exist: does the model say so or invent some? | Pass (1 tool call, 11 s) |
 | Tame Impala, countries in 2025 | 2025 shows are on pages 4–5: does the model keep paging? | Pass (6 tool calls, 15 s) |
+| Mogwai, two most-played songs in 2025 | Songs need full mode across 5 pages (80 shows): are the counts exact? | Pass (9 tool calls, 36 s, ~$1.31) |
 
-Baseline: `claude-opus-5-5`, one attempt per case. Two cases is a starting point, not a
+Baseline: `claude-opus-5-5`, one attempt per case. Three cases is a starting point, not a
 benchmark. See [evals/README.md](evals/README.md) for running the evals and adding cases.
 
 ```bash
@@ -158,6 +159,6 @@ python smoke_test.py    # exits non-zero if any check fails
 - `otherMatches` can be large for common names (about 30 artists for "The National"),
   which makes even compact responses ~12,600 characters. Trimming it is the next eval
   experiment.
-- Grow the eval set beyond two cases: song questions, ambiguous names, unknown artists.
+- Grow the eval set beyond three cases: more song questions, ambiguous names, unknown artists.
 - setlist.fm data is crowd-sourced, so missing shows mean "not on setlist.fm", not
   "didn't happen". Check setlist.fm's API terms before any commercial use.
