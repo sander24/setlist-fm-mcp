@@ -12,8 +12,10 @@ from pathlib import Path
 from typing import Annotated, Any, Callable
 
 from mcp.server.mcpserver import MCPServer
+from mcp.server.mcpserver.exceptions import ToolError
 from pydantic import Field
 
+from setlist_fm_client import FixtureMissError
 from setlist_fm_client import get_setlists_by_artist_name as _get_setlists_by_artist_name
 
 # stdout carries the MCP protocol; logging goes to stderr.
@@ -119,7 +121,12 @@ def get_setlists_by_artist_name(
     smaller and lets you scan many pages cheaply. Use the default (false) when you need
     the songs that were played.
     """
-    result = _get_setlists_by_artist_name(artist_name, page)
+    try:
+        result = _get_setlists_by_artist_name(artist_name, page)
+    except FixtureMissError as e:
+        # ToolError keeps the message in the tool result (other errors are hidden),
+        # so the eval runner can tell a missing fixture from a real failure.
+        raise ToolError(str(e)) from e
     if result is None:
         return {"error": f"No artist found on setlist.fm for '{artist_name}'."}
 

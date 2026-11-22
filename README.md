@@ -113,7 +113,8 @@ protocol spec directly.
 two things: whether the tool was called correctly (artist, `compact_mode`), and whether
 the answer is correct (an LLM judge compares it with ground truth). The data comes from
 a frozen copy of setlist.fm responses, so the ground truth doesn't drift as new concerts
-are added.
+are added. Eval runs never touch the network: a request missing from the frozen copy
+fails the attempt instead of fetching live data.
 
 | Case | What it tests | Baseline |
 |---|---|---|
@@ -128,6 +129,17 @@ pip install -r evals/requirements.txt   # and add ANTHROPIC_API_KEY to .env
 python evals/run_evals.py
 ```
 
+## Live smoke test
+
+The evals can't notice setlist.fm changing, because they run on frozen data. The smoke
+test covers that gap. It starts the MCP server with an empty cache, sends a few real
+requests (exact match, paging, full and compact mode, ambiguous name, unknown artist)
+and checks the response shape. It doesn't call Claude and needs only `SETLISTFM_API_KEY`.
+
+```bash
+python smoke_test.py    # exits non-zero if any check fails
+```
+
 ## Project layout
 
 | Path | What it is |
@@ -135,6 +147,7 @@ python evals/run_evals.py
 | `server.py` | MCP server: the tool definition, compact mode, call logging |
 | `setlist_fm_client.py` | setlist.fm API client: requests, caching, retries |
 | `try_client.py` | Console script for trying the client by hand |
+| `smoke_test.py` | Live check of the MCP server against the real setlist.fm API |
 | `evals/` | Eval runner, cases, ground-truth helper, frozen data, results |
 
 ## Limitations and next steps
