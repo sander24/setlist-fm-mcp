@@ -50,12 +50,15 @@ DEFAULT_MODEL = "claude-opus-5-5"
 DEFAULT_JUDGE_MODEL = "claude-sonnet-5-5"  # deliberately not the model under test
 MAX_TOKENS = 16000
 
-# $ per million tokens (input, output). Cache reads 0.1x input, cache writes 1.25x input.
+# $ per million tokens: (input, output, cache read). Cache writes (5-minute TTL) cost
+# 1.25x input. Cache reads are 0.05x input on Opus 5.5 and Sonnet 5.5; Haiku 5.5 is
+# assumed to be the usual 0.1x.
 PRICES = {
-    "claude-opus-5-5": (4.00, 20.00),
-    "claude-sonnet-5-5": (2.00, 10.00),
-    "claude-haiku-5-5": (0.10, 0.50),
+    "claude-opus-5-5": (4.00, 20.00, 0.20),
+    "claude-sonnet-5-5": (2.00, 10.00, 0.10),
+    "claude-haiku-5-5": (0.10, 0.50, 0.01),
 }
+CACHE_WRITE_MULTIPLIER = 1.25
 
 METRICS = [  # first binary metric = headline
     {"id": "correct", "label": "Correct", "kind": "binary"},
@@ -98,11 +101,11 @@ def cost_usd(model: str | None, usage: dict[str, int]) -> float | None:
     price = PRICES.get(model or "")
     if not price:
         return None
-    p_in, p_out = price
+    p_in, p_out, p_cache_read = price
     return (
         usage.get("input_tokens", 0) * p_in
-        + usage.get("cache_creation_input_tokens", 0) * p_in * 1.25
-        + usage.get("cache_read_input_tokens", 0) * p_in * 0.1
+        + usage.get("cache_creation_input_tokens", 0) * p_in * CACHE_WRITE_MULTIPLIER
+        + usage.get("cache_read_input_tokens", 0) * p_cache_read
         + usage.get("output_tokens", 0) * p_out
     ) / 1_000_000
 
@@ -177,6 +180,10 @@ async def run_conversation(
             system=system,
             tools=tools,
             messages=messages,
+            # Every turn resends the whole conversation, tool results included. Automatic
+            # caching moves the breakpoint to the end of it each turn, so the next turn
+            # reads everything before at the cache price and writes only what's new.
+            cache_control={"type": "ephemeral"},
             **extra,
         )
         add_usage(usage, response.usage)
