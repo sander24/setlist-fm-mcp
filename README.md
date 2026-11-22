@@ -120,7 +120,7 @@ fails the attempt instead of fetching live data.
 |---|---|---|
 | The National, countries in 2025 | No 2025 shows exist: does the model say so or invent some? | Pass (1 tool call, 11 s) |
 | Tame Impala, countries in 2025 | 2025 shows are on pages 4–5: does the model keep paging? | Pass (6 tool calls, 15 s) |
-| Mogwai, two most-played songs in 2025 | Songs need full mode across 5 pages (80 shows): are the counts exact? | Pass (9 tool calls, 36 s, ~$1.31) |
+| Mogwai, top three songs in Q1 2025 | Songs need full mode; Q1 starts mid-page 5 (one show) and ends on page 7, with a tie for second: are the counts exact? | Pass (6 tool calls, 26 s, ~$0.42) |
 
 Baseline: `claude-opus-5-5`, one attempt per case. Three cases is a starting point, not a
 benchmark. See [evals/README.md](evals/README.md) for running the evals and adding cases.
