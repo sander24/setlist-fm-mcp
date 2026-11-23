@@ -112,15 +112,14 @@ protocol spec directly.
 `evals/` runs realistic questions through Claude with the real MCP server and grades
 two things: whether the tool was called correctly (artist, `compact_mode`), and whether
 the answer is correct (an LLM judge compares it with ground truth). The data comes from
-a frozen copy of setlist.fm responses, so the ground truth doesn't drift as new concerts
-are added. Eval runs never touch the network: a request missing from the frozen copy
-fails the attempt instead of fetching live data.
+the live setlist.fm API. The cases ask about 2025 or earlier, so the ground truth stays
+valid while new concerts are added.
 
 | Case | What it tests | Baseline |
 |---|---|---|
 | The National, countries in 2025 | No 2025 shows exist: does the model say so or invent some? | Pass (1 tool call, 11 s) |
-| Tame Impala, countries in 2025 | 2025 shows are on pages 4–5: does the model keep paging? | Pass (6 tool calls, 15 s) |
-| Mogwai, top three songs in Q1 2025 | Songs need full mode; Q1 starts mid-page 5 (one show) and ends on page 7, with a tie for second: are the counts exact? | Pass (6 tool calls, 26 s, ~$0.42) |
+| Tame Impala, countries in 2025 | 2025 shows come after several pages of 2026 ones: does the model keep paging? | Pass (6 tool calls, 15 s) |
+| Mogwai, top three songs in Q1 2025 | Songs need full mode, Q1 starts and ends mid-page, and two songs tie for second: are the counts exact? | Pass (6 tool calls, 26 s, ~$0.42) |
 
 Baseline: `claude-opus-5-5`, one attempt per case. Three cases is a starting point, not a
 benchmark. See [evals/README.md](evals/README.md) for running the evals and adding cases.
@@ -132,8 +131,8 @@ python evals/run_evals.py
 
 ## Live smoke test
 
-The evals can't notice setlist.fm changing, because they run on frozen data. The smoke
-test covers that gap. It starts the MCP server with an empty cache, sends a few real
+The smoke test is a free way to check that your API key works and that setlist.fm still
+returns what the server expects, without paying for an eval run. It starts the MCP server with an empty cache, sends a few real
 requests (exact match, paging, full and compact mode, ambiguous name, unknown artist)
 and checks the response shape. It doesn't call Claude and needs only `SETLISTFM_API_KEY`.
 
@@ -149,7 +148,7 @@ python smoke_test.py    # exits non-zero if any check fails
 | `setlist_fm_client.py` | setlist.fm API client: requests, caching, retries |
 | `try_client.py` | Console script for trying the client by hand |
 | `smoke_test.py` | Live check of the MCP server against the real setlist.fm API |
-| `evals/` | Eval runner, cases, ground-truth helper, frozen data, results |
+| `evals/` | Eval runner, cases, ground-truth helper, results |
 
 ## Limitations and next steps
 

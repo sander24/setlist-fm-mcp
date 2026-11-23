@@ -9,8 +9,10 @@
 #     artist_name:  the artist the tool must be called with (case-insensitive)
 #     compact_mode: true/false if the tool calls should use it; omit to not grade it
 #     reference:    the ground-truth answer, given to the judge. Any shape; keep it
-#                   factual. Generate it from the frozen data with
+#                   factual. Generate it from the live data with
 #                   evals/ground_truth.py rather than from memory, then check it.
+#                   Describe the data, not where it sits: setlists are paged newest
+#                   first, so new concerts keep moving older ones to later pages.
 #     notes:        optional extra guidance for the judge (what's acceptable)
 
 - id: national-countries-2025
@@ -42,10 +44,10 @@
         - Spain          # 2 shows (Jun: Barcelona)
         - United States  # 14 shows (Sep-Nov, incl. the Deadbeat tour)
     notes: >-
-      20 shows in 2025 across exactly these four countries. They sit on pages 4 and 5
-      of the setlists (pages 1-3 are 2026 shows), so stopping after the first pages
-      misses Spain and Mexico. Listing any other country for 2025 is wrong. Mentioning
-      2026 shows is fine if clearly attributed to 2026.
+      20 shows in 2025 across exactly these four countries. Several pages of 2026 shows
+      come first, so stopping before reaching the start of 2025 misses Spain (June) and
+      Mexico (October). Listing any other country for 2025 is wrong. Mentioning 2026
+      shows is fine if clearly attributed to 2026.
 
 - id: mogwai-top-three-songs-q1-2025
   prompt: "Which three songs did Mogwai play most in Q1 2025, and how many times each?"
@@ -65,9 +67,9 @@
         - God Gets You Back: 23
         - Ritchie Sacramento: 22
     notes: >-
-      The Q1 2025 shows are on pages 5-7: one on page 5 (Manchester, 28 Mar), 20 on
-      page 6 and 4 on page 7, which then continues into 2024. Only full mode includes
-      songs. A correct answer names Hi Chaos (25), Lion Rumpus (24) and Fanzine Made of
+      The Q1 2025 shows come after several pages of later shows, and the quarter
+      starts and ends mid-page, so the model has to filter by date. Only full mode
+      includes songs. A correct answer names Hi Chaos (25), Lion Rumpus (24) and Fanzine Made of
       Flesh (24) with exactly these counts; the two 24s may come in either order, and
       saying they are tied is good but not required. Approximate or hedged counts are
       wrong: the assistant had the same data. Missing the Manchester show gives Hi

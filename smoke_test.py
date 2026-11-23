@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Live smoke test: does the MCP server still work against the real setlist.fm API?
 
-The evals run on frozen data, so they can't notice the API changing, an expired key or
-a broken retry path. This script starts server.py over stdio (as Claude Desktop does),
+A free check that the API key works and the responses still have the shape the
+server relies on, without paying for an eval run. This script starts server.py over
+stdio (as Claude Desktop does),
 with an empty throwaway cache so every request goes to setlist.fm, and checks the shape
 of what comes back. It does not call Claude and costs nothing but 7 setlist.fm requests.
 

@@ -3,7 +3,7 @@
 
 For each case (and each rep) this:
   1. starts a conversation with Claude, offering the tools that server.py exposes
-     over MCP (the real server, against the frozen setlist.fm fixtures),
+     over MCP (the real server, against the live setlist.fm API),
   2. runs the tool loop until Claude answers,
   3. grades the result:
        tool_ok      - the tool was called with the expected artist      (programmatic)
@@ -38,11 +38,7 @@ from mcp import Client, StdioServerParameters
 
 EVALS_DIR = Path(__file__).resolve().parent
 PROJECT_DIR = EVALS_DIR.parent
-FIXTURE_CACHE = EVALS_DIR / "fixtures" / "setlistfm"
 RESULTS_DIR = EVALS_DIR / "results"
-# Marks a strict-mode cache miss in a tool error. Same value as
-# setlist_fm_client.FIXTURE_MISS (not imported: that module opens a cache on import).
-FIXTURE_MISS = "FIXTURE_MISS"
 
 load_dotenv(PROJECT_DIR / ".env")  # ANTHROPIC_API_KEY can live in .env next to the setlist.fm key
 
@@ -224,10 +220,6 @@ async def run_conversation(
             thinking = ""
             result = await mcp.call_tool(block.name, block.input)
             result_text = "\n".join(c.text for c in result.content if getattr(c, "type", None) == "text")
-            if result.is_error and FIXTURE_MISS in result_text:
-                # The model asked for data that isn't frozen. Grading it would mix in live
-                # (or no) data, so the attempt fails instead. Rerun with --record to add it.
-                raise CaseFailure("fixture_miss", result_text, served_model, usage)
             trace.append({"role": "tool_result", "content": result_text})
             tool_calls.append({"name": block.name, "input": block.input, "is_error": bool(result.is_error),
                                "result_chars": len(result_text)})
@@ -389,9 +381,6 @@ async def main() -> None:
     parser.add_argument("--concurrency", type=int, default=4)
     parser.add_argument("--timeout-s", type=float, default=300, help="wall-clock ceiling per attempt")
     parser.add_argument("--max-turns", type=int, default=15, help="max Claude calls per attempt")
-    parser.add_argument("--record", action="store_true",
-                        help="fetch requests missing from the fixture live and freeze them, "
-                             "instead of failing the attempt (check the ground truth afterwards)")
     args = parser.parse_args()
 
     if args.variant != "baseline" and not (args.variant.startswith("v") and args.variant[1:].isdigit()):
@@ -417,11 +406,6 @@ async def main() -> None:
         args=[str(PROJECT_DIR / "server.py")],
         env={
             **os.environ,
-            "SETLISTFM_CACHE_PATH": str(FIXTURE_CACHE),  # frozen data, so ground truth stays valid
-            # Strict: a request missing from the fixture fails the attempt. --record fetches
-            # it live and freezes it instead.
-            "SETLISTFM_CACHE_FROZEN": "1",
-            "SETLISTFM_CACHE_STRICT": "0" if args.record else "1",
             "SETLISTFM_LOG_DIR": str(out_dir),  # tool_calls.jsonl next to the results
         },
     )

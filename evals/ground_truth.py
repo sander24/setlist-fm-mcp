@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
-"""Compute ground truth from the frozen setlist.fm fixtures.
+"""Compute ground truth from live setlist.fm data.
 
-Pages through an artist's setlists in the eval fixture cache (fetching and freezing
-any page not cached yet) and prints the countries they played in a given year, as
-a YAML snippet to paste under `expected.reference` in evals/cases.yaml.
+Pages through an artist's setlists (through the client's normal 1-day cache, the
+same one the eval runs use) and prints the countries they played in a given year,
+as a YAML snippet to paste under `expected.reference` in evals/cases.yaml.
 
     python evals/ground_truth.py "The National" 2025
 """
 
 import argparse
-import os
 import sys
 from collections import Counter
 from datetime import datetime
@@ -17,10 +16,6 @@ from pathlib import Path
 
 EVALS_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(EVALS_DIR.parent))
-# Must be set before setlist_fm_client is imported: it configures its cache at import time.
-os.environ["SETLISTFM_CACHE_PATH"] = str(EVALS_DIR / "fixtures" / "setlistfm")
-os.environ["SETLISTFM_CACHE_FROZEN"] = "1"
-
 from setlist_fm_client import get_setlists_by_artist_name  # noqa: E402
 
 

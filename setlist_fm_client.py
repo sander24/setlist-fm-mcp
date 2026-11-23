@@ -24,31 +24,16 @@ if not API_KEY:
     raise RuntimeError("SETLISTFM_API_KEY is not set. Copy .env.example to .env and add your key.")
 
 BASE_URL = "https://api.setlist.fm/rest/1.0"
-# SETLISTFM_CACHE_PATH points at another cache file (e.g. the eval fixtures).
-# SETLISTFM_CACHE_FROZEN=1 makes cached responses never expire, so repeated runs see
-# the same data; anything not yet cached is fetched once and then frozen too.
-# SETLISTFM_CACHE_STRICT=1 (implies frozen) never touches the network: a request that
-# isn't cached raises FixtureMissError instead of being fetched. The evals use this.
+# SETLISTFM_CACHE_PATH points at another cache file (e.g. a throwaway one for the smoke test).
 CACHE_PATH = Path(
     os.environ.get("SETLISTFM_CACHE_PATH", Path(__file__).resolve().parent / ".cache" / "setlistfm")
 )
-CACHE_STRICT = os.environ.get("SETLISTFM_CACHE_STRICT") == "1"
-CACHE_FROZEN = CACHE_STRICT or os.environ.get("SETLISTFM_CACHE_FROZEN") == "1"
-
-# Prefix of FixtureMissError messages; the eval runner looks for it in tool errors.
-FIXTURE_MISS = "FIXTURE_MISS"
-
-
-class FixtureMissError(RuntimeError):
-    """A request was not in the cache while SETLISTFM_CACHE_STRICT=1."""
 
 session = requests_cache.CachedSession(
     str(CACHE_PATH),
     backend="sqlite",
-    expire_after=requests_cache.NEVER_EXPIRE if CACHE_FROZEN else timedelta(days=1),
-    urls_expire_after=None
-    if CACHE_FROZEN
-    else {
+    expire_after=timedelta(days=1),
+    urls_expire_after={
         "api.setlist.fm/rest/1.0/search/artists*": timedelta(days=7),
         "api.setlist.fm/rest/1.0/artist/*/setlists*": timedelta(days=1),
         "api.setlist.fm/rest/1.0/setlist/*": timedelta(days=30),
@@ -84,10 +69,7 @@ session.headers.update(
 
 def _get(path: str, params: dict) -> dict | None:
     """GET an API path; return parsed JSON, or None on 404. Raises on other errors."""
-    resp = session.get(f"{BASE_URL}{path}", params=params, timeout=15, only_if_cached=CACHE_STRICT)
-    # requests-cache answers a strict-mode miss with a synthetic 504 instead of fetching.
-    if CACHE_STRICT and resp.status_code == 504:
-        raise FixtureMissError(f"{FIXTURE_MISS}: GET {resp.url} is not in the cache at {CACHE_PATH}")
+    resp = session.get(f"{BASE_URL}{path}", params=params, timeout=15)
     source = "cache" if resp.from_cache else "API"
     logger.info("GET %s -> HTTP %s (from %s)", resp.url, resp.status_code, source)
 
