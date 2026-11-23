@@ -74,3 +74,6 @@ The setlist.fm API is free, but it needs `SETLISTFM_API_KEY` in `.env`.
 `ground_truth.py` answers "which countries in year X". For other kinds of questions, write
 the `reference` by hand from the data, in whatever shape is clearest, and use `notes` to
 tell the judge how to read it.
+
+Put every fact the judge needs in `reference` or `notes`, never in a YAML comment
+(`# ...`): comments are dropped when `cases.yaml` is parsed, so the judge never sees them.

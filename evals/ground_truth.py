@@ -60,7 +60,9 @@ def main() -> None:
     else:
         print("  countries:")
         for name, n in sorted(countries.items()):
-            print(f"    - {name}  # {n} show(s)")
+            # A value, not a YAML comment: comments are dropped when cases.yaml is
+            # parsed, so the judge would never see the counts.
+            print(f"    - {name}: {n} show{'s' if n != 1 else ''}")
 
 
 if __name__ == "__main__":

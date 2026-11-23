@@ -39,10 +39,10 @@
     reference:
       year: 2025
       countries:
-        - Australia      # 3 shows (Dec: Sydney, Melbourne, Brisbane)
-        - Mexico         # 1 show (Oct: Naucalpan)
-        - Spain          # 2 shows (Jun: Barcelona)
-        - United States  # 14 shows (Sep-Nov, incl. the Deadbeat tour)
+        - Australia: "3 shows (December: Sydney, Melbourne, Brisbane)"
+        - Mexico: "1 show (October: Naucalpan)"
+        - Spain: "2 shows (June: Barcelona)"
+        - United States: "14 shows (September to November, incl. the Deadbeat tour)"
     notes: >-
       20 shows in 2025 across exactly these four countries. Several pages of 2026 shows
       come first, so stopping before reaching the start of 2025 misses Spain (June) and
@@ -107,10 +107,35 @@
     reference:
       count: 0
       year: 2024
-      shows_in_2024: 20     # Hackney Diamonds tour, 28 Apr - 21 Jul: 19 in the United States, 1 in Canada
+      shows_in_2024: 20
+      tour: Hackney Diamonds, 28 Apr to 21 Jul 2024
+      countries_in_2024:
+        - United States: 19 shows
+        - Canada: "1 show (Vancouver, 5 Jul)"
     notes: >-
       0 is correct: all 20 of their 2024 shows (the Hackney Diamonds tour, April to July)
       were in North America. They do play Germany regularly, most recently in 2022 on
       the Sixty tour (Munich, 5 Jun; Gelsenkirchen, 27 Jul; Berlin, 3 Aug), so counting
       those or any other year's German shows is wrong. Mentioning them is fine if
       clearly attributed to that year. Saying the artist couldn't be found is wrong.
+
+- id: genialistid-last-concert
+  prompt: "Where did Genialistid play their last concert?"
+  tags: [last-concert, no-year]
+  expected:
+    artist_name: Genialistid
+    compact_mode: true
+    reference:
+      date: 05-07-2024
+      venue: Tartu Laululava
+      city: Tartu
+      country: Estonia
+      setlists_on_setlist_fm: 2
+      other_setlist: 26-08-2006, Tallinna Lauluväljak, Tallinn
+    notes: >-
+      The most recent setlist on setlist.fm is 5 July 2024 at Tartu Laululava in Tartu,
+      Estonia, and that is the correct answer. setlist.fm has only two setlists for this
+      band, so noting that its coverage may be incomplete, or that this is the last
+      concert setlist.fm knows of, is fine. Naming a different venue or date as the
+      answer is wrong, even with a caveat. The question has no year: the answer must
+      not depend on assuming one.
