@@ -157,3 +157,23 @@
       count, or reporting Metallica's concerts as this band's. Offering to look up
       Metallica, or giving Metallica's figures clearly labelled as a different band, is
       fine. Saying the name may be misspelled or may not be listed on setlist.fm is fine.
+
+- id: my-dying-bride-gigs-2023-2024
+  prompt: "How many gigs did My Dying Bride play in each of 2023 and 2024?"
+  tags: [count, several-years, multi-page]
+  expected:
+    artist_name: My Dying Bride
+    compact_mode: true
+    reference:
+      "2023": "7 gigs: Dessel (15 Jun), Horten (19 Aug), Balve (8 Sep), Aleksandrów Łódzki (9 Sep), Würzburg (18 Nov), London (1 Dec), Bradford (14 Dec)"
+      "2024": "2 gigs: both on the cruise ship Freedom of the Seas from Miami (30 Jan, 1 Feb)"
+      neighbouring_years: "2022: 2 gigs; 2025: 17 gigs"
+    notes: >-
+      Correct: 7 in 2023 and 2 in 2024. Giving the combined total (9) as well is fine.
+      Both numbers must be exact and attributed to the right year: the last 2023 gig
+      (14 Dec) and the first 2024 gig (30 Jan) are close, so 6 and 3, or 8 and 1, is
+      wrong even though the total is 9. Counting only the 2023 gigs, or only the 2024
+      ones, is wrong. Including any 2022 or 2025 gigs is wrong; 2025 has 17 and they come
+      first in the results. The two 2024 gigs were on a cruise ship: counting them as two
+      gigs is correct, and as one event is wrong unless the answer says there were two
+      performances.
