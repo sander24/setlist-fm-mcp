@@ -162,3 +162,13 @@ python smoke_test.py    # exits non-zero if any check fails
 - Grow the eval set beyond three cases: more song questions, ambiguous names, unknown artists.
 - setlist.fm data is crowd-sourced, so missing shows mean "not on setlist.fm", not
   "didn't happen". Check setlist.fm's API terms before any commercial use.
+
+## License
+
+The code in this repository is released under the [MIT License](LICENSE),
+© 2026 Sander Sõnajalg.
+
+The license covers the code only, not setlist.fm data. Setlist data belongs to
+setlist.fm and its licensors, and using the API requires your own API key and is
+governed by the [setlist.fm Terms of Use](https://www.setlist.fm/help/terms), which
+allow non-commercial use only and require attribution to setlist.fm.
