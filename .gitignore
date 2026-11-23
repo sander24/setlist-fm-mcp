@@ -4,3 +4,9 @@
 __pycache__/
 logs/
 .DS_Store
+
+# Eval outputs that contain raw setlist.fm responses (the terms allow only short-term
+# caching). They're still written locally on every run; results.jsonl stays tracked.
+evals/results/*/tool_calls.jsonl
+evals/results/*/tool_calls.jsonl.*
+evals/results/*/traces/
