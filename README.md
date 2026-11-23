@@ -122,10 +122,12 @@ valid while new concerts are added.
 | Tame Impala, Spain shows in 2025 | Spain shows in 2026 come first: is the count 2, not 4? | Pass (4 tool calls, 11 s, ~$0.15) |
 | The Rolling Stones, Germany shows in 2024 | A country they play often (3 shows in 2022) but not in 2024: is the count 0? | Pass (2 tool calls, 14 s, ~$0.09) |
 | Genialistid, last concert | No year in the question, and only 2 setlists on setlist.fm: does it name the latest (Tartu, 5 Jul 2024) without inventing a later one? | Pass (1 tool call, 7 s, ~$0.02) |
+| Unknown artist, "Metallica Gangsta Rap Big Band" | No such artist on setlist.fm: does it say so, without inventing shows or passing off Metallica's? | Pass (1 tool call, 8 s, ~$0.02) |
 | Mogwai, top three songs in Q1 2025 | Songs need full mode, Q1 starts and ends mid-page, and two songs tie for second: are the counts exact? | Pass (6 tool calls, 26 s, ~$0.42) |
 
-Baseline: `claude-opus-5-5`, one attempt per case. Six cases is a starting point, not a
-benchmark. See [evals/README.md](evals/README.md) for running the evals and adding cases.
+Baseline: `claude-opus-5-5` (judge: `claude-sonnet-5-5`), one attempt per case. The evals
+now run on `claude-sonnet-5-5` by default, judged by `claude-opus-5-5`; this table predates
+that change. Seven cases is a starting point, not a benchmark. See [evals/README.md](evals/README.md) for running the evals and adding cases.
 
 ```bash
 pip install -r evals/requirements.txt   # and add ANTHROPIC_API_KEY to .env
@@ -161,7 +163,7 @@ python smoke_test.py    # exits non-zero if any check fails
 - `otherMatches` can be large for common names (about 30 artists for "The National"),
   which makes even compact responses ~12,600 characters. Trimming it is the next eval
   experiment.
-- Grow the eval set beyond six cases: more song questions, ambiguous names, unknown artists.
+- Grow the eval set beyond seven cases: more song questions, ambiguous names, questions spanning several years.
 - setlist.fm data is crowd-sourced, so missing shows mean "not on setlist.fm", not
   "didn't happen". Check setlist.fm's API terms before any commercial use.
 

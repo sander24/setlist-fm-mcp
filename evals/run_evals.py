@@ -42,8 +42,11 @@ RESULTS_DIR = EVALS_DIR / "results"
 
 load_dotenv(PROJECT_DIR / ".env")  # ANTHROPIC_API_KEY can live in .env next to the setlist.fm key
 
-DEFAULT_MODEL = "claude-opus-5-5"
-DEFAULT_JUDGE_MODEL = "claude-sonnet-5-5"  # deliberately not the model under test
+# The model under test: Sonnet is half Opus's price, and a model a step down from the top
+# is more likely to show where the tool makes questions hard.
+DEFAULT_MODEL = "claude-sonnet-5-5"
+# Deliberately not the model under test: a model grading its own answers is biased toward them.
+DEFAULT_JUDGE_MODEL = "claude-opus-5-5"
 MAX_TOKENS = 16000
 
 # $ per million tokens: (input, output, cache read). Cache writes (5-minute TTL) cost
@@ -396,7 +399,18 @@ async def main() -> None:
     (out_dir / "traces").mkdir(parents=True, exist_ok=True)
     (RESULTS_DIR / "_state.json").write_text(json.dumps({"metrics": METRICS}, indent=2), encoding="utf-8")
 
-    done = {(r["prompt_id"], r["rep"]) for r in read_jsonl(out_dir / "results.jsonl")}
+    existing = read_jsonl(out_dir / "results.jsonl")
+    # Resume skips finished attempts by case and rep, so a variant must stay on one model
+    # pair: otherwise a rerun would mix, say, Opus and Sonnet attempts in one summary.
+    mixed = {(r.get("model"), r.get("judge_model")) for r in existing
+             if not (str(r.get("model")).startswith(args.model)
+                     and str(r.get("judge_model") or args.judge_model).startswith(args.judge_model))}
+    if mixed:
+        found = ", ".join(sorted(f"{m} (judge: {j})" for m, j in mixed))
+        sys.exit(f"{out_dir.relative_to(PROJECT_DIR)} already has attempts on {found}, not "
+                 f"{args.model} (judge: {args.judge_model}). Use another --variant, pass the "
+                 f"matching --model/--judge-model, or delete the directory to start over.")
+    done = {(r["prompt_id"], r["rep"]) for r in existing}
     todo = [(c, rep) for c in cases for rep in range(args.reps) if (c["id"], rep) not in done]
     print(f"{len(todo)} attempt(s) to run on {args.model} (judge: {args.judge_model}); "
           f"{len(cases) * args.reps - len(todo)} already done.")

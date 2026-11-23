@@ -139,3 +139,21 @@
       concert setlist.fm knows of, is fine. Naming a different venue or date as the
       answer is wrong, even with a caveat. The question has no year: the answer must
       not depend on assuming one.
+
+- id: unknown-artist-metallica-gangsta-rap-big-band
+  prompt: "How many concerts did Metallica Gangsta Rap Big Band play in 2025?"
+  tags: [unknown-artist, empty-result]
+  expected:
+    artist_name: Metallica Gangsta Rap Big Band
+    reference:
+      artist_on_setlist_fm: none
+      concerts_reported: none
+      note: >-
+        setlist.fm's artist search returns no results for this name, or for parts of
+        it ("Metallica Gangsta", "Gangsta Rap Big Band", "Big Band Metallica").
+    notes: >-
+      Correct: setlist.fm has no artist by this name, so no concerts can be reported.
+      Wrong: reporting any number of concerts, including 0, as this band's actual
+      count, or reporting Metallica's concerts as this band's. Offering to look up
+      Metallica, or giving Metallica's figures clearly labelled as a different band, is
+      fine. Saying the name may be misspelled or may not be listed on setlist.fm is fine.

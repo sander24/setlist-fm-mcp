@@ -8,7 +8,7 @@ server, over stdio), loops until Claude answers, then grades three things:
 
 | Metric | How it's graded | What it checks |
 |---|---|---|
-| `correct` | LLM judge (`claude-sonnet-5-5` by default) | Answer agrees with the ground truth; nothing missing, nothing invented |
+| `correct` | LLM judge (`claude-opus-5-5` by default) | Answer agrees with the ground truth; nothing missing, nothing invented |
 | `tool_ok` | Code | Every `get_setlists_by_artist_name` call used the expected artist |
 | `compact_ok` | Code | Every call used the expected `compact_mode` |
 
