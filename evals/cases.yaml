@@ -76,3 +76,41 @@
       Chaos 24, which is wrong. Including shows from outside Q1 is wrong. "Times played"
       and "shows played at" are the same here. Listing further songs is fine if their
       counts don't contradict the reference.
+
+- id: tame-impala-spain-count-2025
+  prompt: "How many times did Tame Impala play in Spain in 2025?"
+  tags: [where-played, multi-page, country-filter]
+  expected:
+    artist_name: Tame Impala
+    compact_mode: true
+    reference:
+      count: 2
+      year: 2025
+      shows:
+        - 06-06-2025: Parc del Fòrum, Barcelona   # Primavera Sound, 11 songs
+        - 07-06-2025: Nitsa, Barcelona            # club show, 5 songs
+    notes: >-
+      Two shows in 2025, both in Barcelona, on 6 and 7 June. 2 is correct. The 7 June
+      show at Nitsa (a club, 5 songs listed) may have been a DJ or club set, so an answer
+      that counts the 6 June show and describes the Nitsa show separately is also
+      correct, as long as it mentions both. 1 with no mention of Nitsa is wrong.
+      Tame Impala also played Spain in April 2026 (Madrid, 7 Apr; Barcelona, 8 Apr), and
+      those shows come first in the results, so 4, or any count that includes them, is
+      wrong. Mentioning them is fine if clearly attributed to 2026.
+
+- id: rolling-stones-germany-2024
+  prompt: "How many times did The Rolling Stones play in Germany in 2024?"
+  tags: [where-played, empty-result, country-filter]
+  expected:
+    artist_name: The Rolling Stones
+    compact_mode: true
+    reference:
+      count: 0
+      year: 2024
+      shows_in_2024: 20     # Hackney Diamonds tour, 28 Apr - 21 Jul: 19 in the United States, 1 in Canada
+    notes: >-
+      0 is correct: all 20 of their 2024 shows (the Hackney Diamonds tour, April to July)
+      were in North America. They do play Germany regularly, most recently in 2022 on
+      the Sixty tour (Munich, 5 Jun; Gelsenkirchen, 27 Jul; Berlin, 3 Aug), so counting
+      those or any other year's German shows is wrong. Mentioning them is fine if
+      clearly attributed to that year. Saying the artist couldn't be found is wrong.
