@@ -47,14 +47,22 @@ python evals/run_evals.py --variant v1             # after changing the tool, co
 
 Results go to `evals/results/<variant>/`:
 
-- `results.jsonl`: one row per attempt, with grades, the judge's explanation, the answer and metrics
+- `results.jsonl`: one row per attempt, with grades, the judge's explanation, the answer and metrics,
+  plus `code`: the git commit the attempt ran on, and whether there were uncommitted changes
+  (outside `evals/results/`). Commit before an experiment run so each variant points at exact code.
 - `traces/<case>_rep<N>.json`: the full conversation, including tool calls and results
 - `tool_calls.jsonl`: the MCP server's log of exactly what it returned
 - `errors.jsonl`: attempts that failed before they could be graded (timeouts, API errors,
   setlist.fm being down)
 
 Runs resume: rerunning skips attempts already in `results.jsonl`. To redo a variant, delete
-its directory. Every run calls the Claude API and costs money; the summary prints the total.
+its directory. A variant stays on one model and judge: the runner refuses to add attempts made
+with a different pair. Every run calls the Claude API and costs money.
+
+The summary prints pass rates, then cost split into the model's (what using the tool costs)
+and the judge's (what evaluating costs), the commits the attempts ran on, and a per-case table
+of medians: correct answers, tool calls, tokens (every token processed, cached or not) and
+model cost.
 The setlist.fm API is free, but it needs `SETLISTFM_API_KEY` in `.env`.
 
 ## Adding a case and its ground truth

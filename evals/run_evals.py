@@ -25,6 +25,8 @@ import json
 import math
 import os
 import random
+import statistics
+import subprocess
 import sys
 import time
 from datetime import date
@@ -123,6 +125,31 @@ def wilson(passes: int, n: int, z: float = 1.96) -> tuple[float, float]:
     centre = (p + z * z / (2 * n)) / denom
     half = z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / denom
     return (max(0.0, centre - half), min(1.0, centre + half))
+
+
+def code_version() -> dict[str, Any]:
+    """The git commit the run uses, and whether the working tree differs from it.
+
+    A variant directory stores results, not code, so this is what lets you check out the
+    exact code again (e.g. to rerun an old variant on the same day as a new one). Changes
+    under evals/results/ don't count: runs modify results.jsonl themselves.
+    """
+    def git(*cmd: str) -> str:
+        return subprocess.run(["git", *cmd], cwd=PROJECT_DIR, capture_output=True, text=True,
+                              check=True).stdout
+    try:
+        commit = git("rev-parse", "HEAD").strip()
+        changed = [line[3:] for line in git("status", "--porcelain").splitlines()
+                   if not line[3:].startswith("evals/results/")]
+    except (OSError, subprocess.CalledProcessError):
+        return {"commit": None, "dirty": None, "changed": []}
+    return {"commit": commit, "dirty": bool(changed), "changed": changed}
+
+
+def tokens(usage: dict[str, int]) -> int:
+    """Every token the model processed or produced, cached or not."""
+    return sum(usage.get(k, 0) for k in
+               ("input_tokens", "cache_creation_input_tokens", "cache_read_input_tokens", "output_tokens"))
 
 
 def append_jsonl(path: Path, row: dict[str, Any]) -> None:
@@ -325,6 +352,7 @@ async def run_case(claude, mcp, tools, case, rep, args, out_dir: Path) -> None:
         "judge_model": judge_model,
         "judge_usage": judge_usage,
         "trace": str(trace_path.relative_to(RESULTS_DIR)),
+        "code": args.code,
     }
     append_jsonl(out_dir / "results.jsonl", row)
     marks = " ".join(f"{k}={'PASS' if v == 1 else 'FAIL'}" for k, v in row["grade"].items())
@@ -354,10 +382,30 @@ def summarize(out_dir: Path, variant: str) -> None:
     if rows:
         lat = sorted(r["latency_s"] for r in rows)
         calls = sum(r["tool_calls"] for r in rows) / len(rows)
-        costs = [(cost_usd(r["model"], r["usage"]) or 0) + (cost_usd(r.get("judge_model"), r.get("judge_usage") or {}) or 0)
-                 for r in rows]
-        print(f"  median latency {lat[len(lat) // 2]}s, {calls:.1f} tool calls/attempt, "
-              f"~${sum(costs):.3f} total (~${sum(costs) / len(rows):.3f}/attempt)")
+        # The model's cost is what using the tool costs; the judge's is the cost of evaluating.
+        model_cost = sum(cost_usd(r["model"], r["usage"]) or 0 for r in rows)
+        judge_cost = sum(cost_usd(r.get("judge_model"), r.get("judge_usage") or {}) or 0 for r in rows)
+        print(f"  median latency {lat[len(lat) // 2]}s, {calls:.1f} tool calls/attempt")
+        print(f"  cost: model ~${model_cost:.3f} (~${model_cost / len(rows):.3f}/attempt), "
+              f"judge ~${judge_cost:.3f}, total ~${model_cost + judge_cost:.3f}")
+
+        commits = {((r.get("code") or {}).get("commit") or "unknown")[:7]
+                   + ("+changes" if (r.get("code") or {}).get("dirty") else "") for r in rows}
+        print(f"  code: {', '.join(sorted(commits))}")
+
+        # Per case: medians over its attempts, so one unusual attempt doesn't dominate.
+        by_case: dict[str, list[dict[str, Any]]] = {}
+        for r in rows:
+            by_case.setdefault(r["prompt_id"], []).append(r)
+        width = max(len(case_id) for case_id in by_case)
+        print(f"\n  {'case':<{width}}  correct  calls  tokens   model $")
+        for case_id, case_rows in by_case.items():
+            graded = [r["grade"]["correct"] for r in case_rows if r["status"] == "ok" and "correct" in r["grade"]]
+            correct = f"{int(sum(graded))}/{len(graded)}" if graded else "-"
+            med_calls = statistics.median(r["tool_calls"] for r in case_rows)
+            med_tokens = statistics.median(tokens(r["usage"]) for r in case_rows)
+            med_cost = statistics.median(cost_usd(r["model"], r["usage"]) or 0 for r in case_rows)
+            print(f"  {case_id:<{width}}  {correct:>7}  {med_calls:>5g}  {med_tokens:>6,.0f}  {med_cost:>8.3f}")
 
     failures = [r for r in scored if any(v == 0 for v in r["grade"].values())]
     for r in failures:
@@ -411,6 +459,10 @@ async def main() -> None:
                  f"{args.model} (judge: {args.judge_model}). Use another --variant, pass the "
                  f"matching --model/--judge-model, or delete the directory to start over.")
     done = {(r["prompt_id"], r["rep"]) for r in existing}
+    args.code = code_version()
+    if args.code["dirty"]:
+        print(f"Note: uncommitted changes outside evals/results/ ({', '.join(args.code['changed'][:5])}); "
+              "results will record the commit as having changes.")
     todo = [(c, rep) for c in cases for rep in range(args.reps) if (c["id"], rep) not in done]
     print(f"{len(todo)} attempt(s) to run on {args.model} (judge: {args.judge_model}); "
           f"{len(cases) * args.reps - len(todo)} already done.")
