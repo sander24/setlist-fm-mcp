@@ -90,6 +90,48 @@ get cheaper without getting less correct.
 Tokens, tool calls and latency are reported alongside, but they don't decide. Judge cost
 doesn't count: it measures evaluating, not using the tool.
 
+### Result: adopted
+
+v1 ran on commit `c063942`, on the same day as the baseline. Both conditions of the
+decision rule hold: 22/24 correct (the same as the baseline), and total model cost 56% lower.
+
+| | Baseline | v1 | Change |
+|---|---:|---:|---:|
+| Correct | 22/24 | 22/24 | same |
+| Model cost | $1.666 | $0.725 | −56% |
+| Model tokens | 1,358,926 | 521,790 | −62% |
+| Tool calls per attempt (mean) | 3.75 | 1.79 | −52% |
+| Median latency | 11.7s | 6.6s | −43% |
+
+| Case | Correct | Tool calls (median) | Model $ (3 attempts) | Change |
+|---|---|---|---:|---:|
+| tame-impala-spain-count-2025 | 3/3 → 3/3 | 6 → 1 | 0.314 → 0.024 | −92% |
+| tame-impala-countries-2025 | 2/3 → 3/3 | 6 → 1 | 0.297 → 0.031 | −90% |
+| rolling-stones-germany-2024 | 2/3 → 3/3 | 2 → 1 | 0.124 → 0.024 | −81% |
+| my-dying-bride-gigs-2023-2024 | 3/3 → 3/3 | 3 → 2 | 0.069 → 0.025 | −64% |
+| unknown-artist-metallica-gangsta-rap-big-band | 3/3 → 3/3 | 3 → 3 | 0.038 → 0.023 | −39% |
+| mogwai-top-three-songs-q1-2025 | 3/3 → 1/3 | 8 → 4 | 0.764 → 0.485 | −36% |
+| genialistid-last-concert | 3/3 → 3/3 | 1 → 1 | 0.010 → 0.011 | +12% |
+| national-countries-2025 | 3/3 → 3/3 | 1 → 2 | 0.049 → 0.102 | +106% |
+
+The savings come from the cases about one year or one country. They no longer page
+through the artist's whole history, and with a country filter, `setlists.total` answers
+"how many" in a single call.
+
+**Caveats:**
+
+- **Mogwai fell from 3/3 to 1/3.** In both failing attempts the tool returned all 25 Q1
+  shows, and the model still counted Lion Rumpus as 23 instead of 24. Recounting from the
+  data it received gives 24, so the reference and the judge are right: the errors are in the
+  counting, not missing data. With 3 attempts per variant, it isn't clear whether v1 caused
+  this or it is noise. Running this case at about 10 attempts on each variant would tell.
+- **The National cost more.** setlist.fm has no 2025 shows for them, and after getting
+  `total: 0` the model makes a second, unfiltered call to check. That follow-up call also
+  fails `year_ok` (15/18). Like the earlier `tool_ok` rule, that check fails a reasonable
+  follow-up call even when the answer is correct. It isn't part of the decision rule.
+- **Next candidate:** every call returns about 9,000 characters of `artist` and
+  `otherMatches` before any setlists, which a smaller artist summary would cut on every case.
+
 ## Adding a case and its ground truth
 
 1. Add an entry to `cases.yaml` with an `id`, `prompt`, `tags`, and `expected.artist_name`

@@ -14,6 +14,11 @@
       "id": "compact_ok",
       "label": "Compact mode",
       "kind": "binary"
+    },
+    {
+      "id": "year_ok",
+      "label": "Year filter",
+      "kind": "binary"
     }
   ]
 }
