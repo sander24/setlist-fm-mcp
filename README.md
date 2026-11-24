@@ -50,8 +50,27 @@ named them, and never filtered to one country when the question asked *which* co
   the exact artist name. It failed the model for retrying other spellings after "no artist
   found", which is good behaviour. The check now looks only at the first call.
 
-**Limits:** eight cases is a small set, and the LLM judge hasn't yet been checked against
-hand-labelled answers. The full write-up, with per-case numbers, is in
+**Checking the judge.** Every "correct" above is an LLM judge's verdict, so I checked the
+judge against my own labels. The set was 19 answers: 11 real ones and 8 copies of correct
+answers with one error planted in each, such as a wrong date, a dropped country or a hedged
+count. I labelled them blind, and the judge graded each one 3 times.
+
+- **The judge never passed an answer I labelled wrong.** It caught every planted error, in
+  every run.
+- **It agreed with my labels on 18 of 19.** The one difference: an answer that got the count
+  right but placed a show in "Ridgedale, NJ" (it's in Missouri). The judge failed it for the
+  false detail, and I'd have passed it.
+- **The check changed one grading rule.** The first round disagreed on a reply of "0 concerts"
+  for a band setlist.fm doesn't have. Looking at it, I decided 0 is acceptable when the answer
+  also says no such artist was found. I rewrote that case's grading notes, and re-judged
+  every stored answer with them.
+- **The judge is consistent on clear-cut answers, not on borderline ones.** Re-judging the
+  62 stored answers flipped 2 verdicts on cases whose notes hadn't changed. Both were
+  borderline: the Ridgedale answer, and one that opens with "three countries" and ends with
+  "four". The flips cancelled out, and both variants stayed at 22/24.
+
+**Limits:** eight cases is a small set, and 19 labelled answers check the judge on these
+cases only. The full write-up, with per-case numbers, is in
 [evals/README.md](evals/README.md#experiment-v1-year-and-country-filters).
 
 ## Quick start
@@ -172,9 +191,9 @@ valid while new concerts are added.
 | Case | What it tests | Correct: baseline → v1 |
 |---|---|---|
 | The National, countries in 2025 | No 2025 shows exist: does the model say so or invent some? | 3/3 → 3/3 |
-| Tame Impala, countries in 2025 | 2025 shows come after several pages of 2026 ones: does the model keep paging? | 2/3 → 3/3 |
+| Tame Impala, countries in 2025 | 2025 shows come after several pages of 2026 ones: does the model keep paging? | 1/3 → 3/3 |
 | Tame Impala, Spain shows in 2025 | Spain shows in 2026 come first: is the count 2, not 4? | 3/3 → 3/3 |
-| The Rolling Stones, Germany shows in 2024 | A country they play often (3 shows in 2022) but not in 2024: is the count 0? | 2/3 → 3/3 |
+| The Rolling Stones, Germany shows in 2024 | A country they play often (3 shows in 2022) but not in 2024: is the count 0? | 3/3 → 3/3 |
 | Genialistid, last concert | No year in the question, and only 2 setlists on setlist.fm: does it name the latest (Tartu, 5 Jul 2024) without inventing a later one? | 3/3 → 3/3 |
 | Unknown artist, "Metallica Gangsta Rap Big Band" | No such artist on setlist.fm: does it say so, without inventing shows or passing off Metallica's? | 3/3 → 3/3 |
 | My Dying Bride, gigs in each of 2023 and 2024 | Two years in one question, with a close year boundary and 17 gigs in 2025 coming first: is it 7 and 2? | 3/3 → 3/3 |

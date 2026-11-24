@@ -107,13 +107,19 @@ decision rule hold: 22/24 correct (the same as the baseline), and total model co
 | Case | Correct | Tool calls (median) | Model $ (3 attempts) | Change |
 |---|---|---|---:|---:|
 | tame-impala-spain-count-2025 | 3/3 → 3/3 | 6 → 1 | 0.314 → 0.024 | −92% |
-| tame-impala-countries-2025 | 2/3 → 3/3 | 6 → 1 | 0.297 → 0.031 | −90% |
-| rolling-stones-germany-2024 | 2/3 → 3/3 | 2 → 1 | 0.124 → 0.024 | −81% |
+| tame-impala-countries-2025 | 1/3 → 3/3 | 6 → 1 | 0.297 → 0.031 | −90% |
+| rolling-stones-germany-2024 | 3/3 → 3/3 | 2 → 1 | 0.124 → 0.024 | −81% |
 | my-dying-bride-gigs-2023-2024 | 3/3 → 3/3 | 3 → 2 | 0.069 → 0.025 | −64% |
 | unknown-artist-metallica-gangsta-rap-big-band | 3/3 → 3/3 | 3 → 3 | 0.038 → 0.023 | −39% |
 | mogwai-top-three-songs-q1-2025 | 3/3 → 1/3 | 8 → 4 | 0.764 → 0.485 | −36% |
 | genialistid-last-concert | 3/3 → 3/3 | 1 → 1 | 0.010 → 0.011 | +12% |
 | national-countries-2025 | 3/3 → 3/3 | 1 → 2 | 0.049 → 0.102 | +106% |
+
+The "Correct" columns show verdicts after the judge check below. That check changed one
+case's grading notes, so all stored answers were re-judged. Two baseline verdicts flipped,
+in cases whose notes hadn't changed: Tame Impala countries rep 0 from correct to wrong, and
+Rolling Stones rep 2 from wrong to correct. The totals stayed at 22/24 for both variants.
+Each re-judged row in `results.jsonl` keeps its previous verdict under `rejudged`.
 
 The savings come from the cases about one year or one country. They no longer page
 through the artist's whole history, and with a country filter, `setlists.total` answers
@@ -150,6 +156,57 @@ arguments.
   follow-up call even when the answer is correct. It isn't part of the decision rule.
 - **Next candidate:** every call returns about 9,000 characters of `artist` and
   `otherMatches` before any setlists, which a smaller artist summary would cut on every case.
+
+## Judge check
+
+Every `correct` grade is an LLM judge's verdict, so the judge was checked against a
+person's labels (2026-11-24, `claude-opus-5-5`). The files are in `judge_check/`.
+
+**Set:** 19 answers in random order.
+- 11 real answers from the eval runs: 8 the judge had passed (one per case) and 3 it had
+  failed.
+- 8 planted answers: copies of correct answers with one error put in, one per case. The
+  errors were a wrong date, a wrong year, a dropped country, an invented show, an invented
+  country, a gig moved across a year boundary, a hedged count ("roughly 24"), and "0
+  concerts" for an artist setlist.fm doesn't have.
+
+The answers were labelled blind, with the same question, reference, notes and criteria the
+judge gets. The judge then graded each answer 3 times.
+
+| | Round 1 | Round 2 |
+|---|---|---|
+| Agreement with the labels (judge's majority of 3) | 16/19 | 18/19 |
+| Answers the judge passed but the labels failed | 0 | 0 |
+| Answers where the judge's 3 runs disagreed | 0/19 | 0/19 |
+
+**Round 1** disagreed on 3 answers, and each time the judge was stricter than the labels:
+- **The hedged count:** the grading notes say hedged counts are wrong. On a second look the
+  labeller agreed, and relabelled it.
+- **"0 concerts" for the unknown artist:** the notes said any count, including 0, is wrong.
+  The labeller decided 0 should count as correct when the answer also says no such artist
+  was found, and rewrote that case's notes in `cases.yaml`. Under the new notes this planted
+  answer is correct, so 7 planted errors remain, and the judge caught all 7 in every run.
+- **"Ridgedale, NJ":** a correct count with a false detail (Ridgedale is in Missouri). The
+  judge fails it, and the labeller would pass it. This is the one difference left after
+  round 2.
+
+**Re-judging after the notes change:** all 62 stored answers were graded again with the new
+notes (`rejudge_results.py`). The unknown-artist verdicts didn't change, since no stored
+answer reported 0. Two verdicts in other cases flipped, though their notes hadn't changed.
+Both were borderline answers:
+- The Ridgedale answer passed this time, after failing in all 7 earlier judge calls.
+- An answer that opens with "three countries" and ends with "four countries in total"
+  failed this time.
+
+**What it shows:** the judge isn't lenient. Across both rounds it never passed an answer
+the labels failed, and it caught every planted error. It is consistent on clear-cut
+answers but not on borderline ones: a single verdict on a borderline answer can go either
+way.
+
+To repeat the check: `build_labelling.py` writes `labels.md` (to fill in) and `key.json`
+(don't open it until you're done). `run_judge_check.py` runs the judge and compares, and
+`rejudge_results.py <variant>...` re-grades stored answers after notes change. Round 1's
+verdicts are in `judge_runs_round1.jsonl`.
 
 ## Adding a case and its ground truth
 
