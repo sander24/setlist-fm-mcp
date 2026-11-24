@@ -162,9 +162,10 @@
         it ("Metallica Gangsta", "Gangsta Rap Big Band", "Big Band Metallica").
     notes: >-
       Correct: setlist.fm has no artist by this name, so no concerts can be reported.
-      Wrong: reporting any number of concerts, including 0, as this band's actual
-      count, or reporting Metallica's concerts as this band's. Offering to look up
-      Metallica, or giving Metallica's figures clearly labelled as a different band, is
+      Wrong: reporting any non-zero number of concerts, as this band's actual count, or
+      reporting Metallica's concerts as this band's. Reporting 0 can be counted correct
+      only when the answer also mentions that no such artist was found. Offering to look
+      up Metallica, or giving Metallica's figures clearly labelled as a different band, is
       fine. Saying the name may be misspelled or may not be listed on setlist.fm is fine.
 
 - id: my-dying-bride-gigs-2023-2024

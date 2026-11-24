@@ -1,0 +1,173 @@
+[
+  {
+    "case": "mogwai-top-three-songs-q1-2025",
+    "answer": "Mogwai played 25 shows in Q1 2025 (26 Jan to 28 Mar), according to setlist.fm. Two songs were clear leaders, and two others tied for third.\n\n1. **Hi Chaos**: 25 times, at every show.\n2. **Fanzine Made of Flesh**: 24 times, at every show except Paris.\n3. **God Gets You Back** and **Lion Rumpus**: 23 times each.\n   - God Gets You Back was missing from Berlin and Antwerp.\n   - Lion Rumpus was missing from Oslo and Beijing.\n\n**Ritchie Sacramento** was close behind with 22 plays.\n\nThese counts come from the setlists as published, and a few are marked incomplete or out of order. Songs that were on the planned set but noted as not played, such as Lion Rumpus in Boston (April, so outside Q1), are not counted.",
+    "kind": "real",
+    "source": "v1 rep1",
+    "judge_verdict": false,
+    "judge_explanation": "The reference gives Lion Rumpus 24 plays, but the answer says 23 and calls it tied with God Gets You Back. The top three therefore has a wrong count and wrong ordering.",
+    "id": "J01"
+  },
+  {
+    "case": "genialistid-last-concert",
+    "answer": "Genialistid's most recent concert in the setlist.fm data was on 5 July 2023 at Tartu Laululava in Tartu, Estonia.\n\nThe site lists only two shows for them. The earlier one was on 26 August 2006 at Tallinna Lauluväljak in Tallinn. Any concerts that nobody has added to setlist.fm won't appear here.",
+    "kind": "planted",
+    "planted_error": "Wrong year for the last concert (2023)",
+    "source": "v1 rep1",
+    "expected_label": "wrong",
+    "id": "J02"
+  },
+  {
+    "case": "rolling-stones-germany-2024",
+    "answer": "The Rolling Stones played in Germany 0 times in 2024, according to setlist.fm. The search for their 2024 shows in Germany returned no results.\n\nTheir 2024 Hackney Diamonds tour was North American apart from one London date in June. Their 2022 Europe tour did include German dates, but that was a different year.",
+    "kind": "planted",
+    "planted_error": "Invented show (a London date in 2024)",
+    "source": "v1 rep1",
+    "expected_label": "wrong",
+    "id": "J03"
+  },
+  {
+    "case": "mogwai-top-three-songs-q1-2025",
+    "answer": "In Q1 2025 (January to March), Mogwai's three most-played songs were:\n\n1. **Hi Chaos**: 25 times\n2. **Fanzine Made of Flesh**: 24 times (tied)\n2. **Lion Rumpus**: roughly 24 times (tied)\n\nMogwai played 25 shows in that period, and the counts come from the setlist.fm setlists for them. \"Hi Chaos\" was in every setlist. \"Fanzine Made of Flesh\" was missing only from Paris (19 Feb). \"Lion Rumpus\" was missing only from Oslo (9 Feb).\n\nThe next closest was \"God Gets You Back\" with 23. It was missing from the Antwerp and Berlin shows. \"Ritchie Sacramento\" was close behind with 22.\n\nSome setlists on setlist.fm are marked incomplete or note songs that were planned but dropped. I used the songs as listed.",
+    "kind": "planted",
+    "planted_error": "Hedged count (\"roughly 24\")",
+    "source": "v1 rep3",
+    "expected_label": "wrong",
+    "id": "J04"
+  },
+  {
+    "case": "tame-impala-countries-2025",
+    "answer": "According to setlist.fm, Tame Impala played in **three countries** in 2025:\n\n1. **United States**\n   - Brooklyn: four Barclays Center shows in late October and early November.\n   - Chicago, Austin, San Diego, Inglewood (Kia Forum) and Oakland: the Deadbeat tour dates in November.\n   - A Tiny Desk Concert in Washington (17 Oct).\n   - A set at The Lot Radio in New York (13 Sept).\n2. **Australia**: arena shows in Sydney (3 Dec), Melbourne (5 Dec) and Brisbane (7 Dec).\n3. **Spain**: two Barcelona dates on 6–7 June. One was at Parc del Fòrum and the other at Nitsa, a club night.\n\nSetlist.fm also lists one Mexico date, at Nido de Quetzalcóatl in Naucalpan on 10 Oct 2025. That one doesn't look like a standard tour stop. If you count it, the total is four countries.\n\nThis is based on setlist.fm's crowd-sourced data, so a show could be missing from it.",
+    "kind": "real",
+    "source": "baseline rep2",
+    "judge_verdict": false,
+    "judge_explanation": "The reference lists four countries for 2025: Australia, Mexico, Spain and the United States. The answer's direct claim is 'three countries' (US, Australia, Spain). It moves Mexico into a hedged side note ('if you count it, the total is four'), even though setlist.fm records a 2025 show in Naucalpan. Mexico is therefore missing from the direct answer, and the stated count of three contradicts the reference.",
+    "id": "J05"
+  },
+  {
+    "case": "national-countries-2025",
+    "answer": "setlist.fm has one show for The National in 2025, in Mexico City, so Mexico is the only country for that year.\n\nThe listing runs from their two most recent shows, in October 2026 (San Sebastián, Spain, and Berlin, Germany), back to that March 2025 festival in Mexico City, and then to October 2024 (the end of the Zen Diagram Tour).\n\nThis could be a real break in touring, or setlist.fm could just be missing 2025 concerts, since it relies on user submissions. I'd check the band's official site if you need to be sure.",
+    "kind": "planted",
+    "planted_error": "Invented 2025 show and country (Mexico City)",
+    "source": "baseline rep1",
+    "expected_label": "wrong",
+    "id": "J06"
+  },
+  {
+    "case": "unknown-artist-metallica-gangsta-rap-big-band",
+    "answer": "I couldn't answer this. setlist.fm has no artist listed as \"Metallica Gangsta Rap Big Band\". I also tried \"Gangsta Rap Big Band\" and \"Metallica Big Band\", and neither returned a match. So as far as setlist.fm is concerned, they played 0 concerts in 2025.\n\nThe act may be listed under a different name, or it may not be on setlist.fm at all. If you can give me another spelling or the name of a member, I'll search again.",
+    "kind": "planted",
+    "planted_error": "Reports 0 concerts as the band's count",
+    "source": "v1 rep1",
+    "expected_label": "wrong",
+    "id": "J07"
+  },
+  {
+    "case": "rolling-stones-germany-2024",
+    "answer": "The Rolling Stones played in Germany **0 times in 2024**, according to setlist.fm. The search for their 2024 German shows returned no results. That fits what I know of their schedule, since their 2024 Hackney Diamonds tour was in North America.",
+    "kind": "real",
+    "source": "v1 rep0",
+    "judge_verdict": true,
+    "judge_explanation": "The answer gives 0, which matches the reference. It also correctly says the 2024 Hackney Diamonds tour was in North America. It doesn't count any shows from other years.",
+    "id": "J08"
+  },
+  {
+    "case": "my-dying-bride-gigs-2023-2024",
+    "answer": "According to setlist.fm, My Dying Bride played:\n\n- **2023:** 7 gigs\n- **2024:** 2 gigs\n\nThe 2024 shows were both on the Royal Caribbean *Freedom of the Seas* cruise, sailing from Miami, on 30 January and 1 February. The 2023 shows were festivals and tour dates in Europe and the UK. These counts only include shows logged on setlist.fm, so the real totals could be higher.",
+    "kind": "real",
+    "source": "v1 rep1",
+    "judge_verdict": true,
+    "judge_explanation": "The answer gives 7 gigs for 2023 and 2 for 2024, which matches the reference. It describes the 2024 shows correctly as two cruise performances (30 Jan and 1 Feb). Its description of the 2023 shows as festivals and tour dates in Europe and the UK fits the reference cities, and the caveat about setlist.fm coverage is kept separate from the counts.",
+    "id": "J09"
+  },
+  {
+    "case": "tame-impala-spain-count-2025",
+    "answer": "Tame Impala played in Spain **2 times** in 2025, according to setlist.fm. Both shows were in Barcelona:\n\n- **6 June 2025** at Parc del Fòrum\n- **7 April 2025** at Nitsa",
+    "kind": "planted",
+    "planted_error": "Wrong date for one show (April, not June)",
+    "source": "v1 rep1",
+    "expected_label": "wrong",
+    "id": "J10"
+  },
+  {
+    "case": "tame-impala-spain-count-2025",
+    "answer": "Tame Impala played **2 shows in Spain in 2025**, according to setlist.fm. Both were in Barcelona:\n\n- **6 June 2025:** Parc del Fòrum (the Primavera Sound festival site)\n- **7 June 2025:** Nitsa, a club night\n\nTheir other Spanish dates fall outside 2025. Palau Sant Jordi in Barcelona and Movistar Arena in Madrid are both April 2026, on the Deadbeat tour.\n\nThe 7 June Nitsa date is probably a club or DJ-style appearance rather than a full concert. Only the Parc del Fòrum show was a festival-size performance.",
+    "kind": "real",
+    "source": "baseline rep0",
+    "judge_verdict": true,
+    "judge_explanation": "The answer gives a count of 2, which matches the reference. It lists both Barcelona shows with the correct dates and venues: Parc del Fòrum on 6 June and Nitsa on 7 June. The 2026 Madrid and Barcelona dates are mentioned but clearly attributed to 2026 and kept out of the count. The note that the Nitsa date was likely a club set is a caveat that the grading notes allow.",
+    "id": "J11"
+  },
+  {
+    "case": "tame-impala-countries-2025",
+    "answer": "In 2025, setlist.fm lists Tame Impala playing in three countries:\n\n- **Spain:** Barcelona, 6–7 June. The 7 June show was at the club Nitsa.\n- **United States:** many dates from September to November. They include the Deadbeat tour arena shows in Brooklyn, Chicago, Austin, San Diego, Oakland and Inglewood. Smaller appearances were a Tiny Desk concert in Washington and a set at The Lot Radio in New York.\n- **Australia:** Sydney, Melbourne and Brisbane, 3–7 December.\n\nSetlist.fm returned exactly 20 setlists for the year, so this should be the full list. It may still miss shows that nobody has logged on the site.",
+    "kind": "planted",
+    "planted_error": "Missing country (Mexico dropped, count says three)",
+    "source": "v1 rep1",
+    "expected_label": "wrong",
+    "id": "J12"
+  },
+  {
+    "case": "mogwai-top-three-songs-q1-2025",
+    "answer": "Mogwai's three most-played songs in Q1 2025 were \"Hi Chaos\" (25 times), \"Fanzine Made of Flesh\" (24) and \"Lion Rumpus\" (24).\n\nI counted the 25 shows setlist.fm lists for 26 Jan to 28 Mar 2025, from Glasgow's Queen Margaret Union to Manchester's O2 Victoria Warehouse.\n\n| Song | Times played |\n|---|---|\n| Hi Chaos | 25 |\n| Fanzine Made of Flesh | 24 |\n| Lion Rumpus | 24 |\n\n- **Close behind:** \"God Gets You Back\" was played 23 times and \"Ritchie Sacramento\" 22 times.\n- **Hi Chaos:** it was in every show. In Brussels it was played as an encore.\n- **Fanzine Made of Flesh:** it was in every show except Paris.\n- **Lion Rumpus:** it was in every show except Oslo.\n- **Setlist data:** these counts rely on setlist.fm's crowd-sourced data. A few entries note songs that were listed but not played. I counted only songs shown as played, so a missing or incomplete setlist could shift a count by one.",
+    "kind": "real",
+    "source": "baseline rep4",
+    "judge_verdict": true,
+    "judge_explanation": "The answer gives Hi Chaos (25), Fanzine Made of Flesh (24) and Lion Rumpus (24). These are exactly the reference counts, and the tied 24s may come in either order. The 25 shows are counted within Q1, including Manchester. The extra songs listed (God Gets You Back 23, Ritchie Sacramento 22) also match the reference. The caveat about crowd-sourced data is kept separate and does not hedge the stated counts. The per-show details (Brussels encore, Paris and Oslo absences) cannot be checked against the reference, but nothing contradicts it.",
+    "id": "J13"
+  },
+  {
+    "case": "rolling-stones-germany-2024",
+    "answer": "The Rolling Stones played in Germany **0 times** in 2024, according to setlist.fm.\n\nAll of their 2024 shows were on the North American Hackney Diamonds tour. It ran from 28 April in Houston to 21 July in Ridgedale, NJ, and covered the US plus one date in Vancouver.\n\nTheir most recent German shows were in 2022 on the \"Sixty\" tour. They played Munich on 5 June, Gelsenkirchen on 27 July and Berlin on 3 August.",
+    "kind": "real",
+    "source": "baseline rep2",
+    "judge_verdict": false,
+    "judge_explanation": "The direct answer of 0 German shows in 2024 matches the reference. It also correctly places the Hackney Diamonds tour in North America (US plus one Vancouver date) and correctly dates the 2022 Sixty tour German shows. However, it states the tour ended in \"Ridgedale, NJ\". Ridgedale (Thunder Ridge Nature Arena) is in Missouri, not New Jersey. That is a wrong factual claim about the 2024 shows, which goes beyond and is unsupported by the reference.",
+    "id": "J14"
+  },
+  {
+    "case": "my-dying-bride-gigs-2023-2024",
+    "answer": "According to setlist.fm, My Dying Bride played these numbers of gigs:\n\n- **2023: 6 gigs**\n  - 15 Jun, Dessel, Belgium\n  - 19 Aug, Horten, Norway\n  - 8 Sep, Balve, Germany\n  - 9 Sep, Aleksandrów Łódzki, Poland\n  - 18 Nov, Würzburg, Germany\n  - 1 Dec, London, UK\n\n- **2024: 3 gigs**\n  - 14 Jan, Bradford, UK\n  - 30 Jan, Miami, on the Royal Caribbean *Freedom of the Seas*\n  - 1 Feb, Miami, on the Royal Caribbean *Freedom of the Seas*\n\nThese counts only include shows that fans have logged on setlist.fm, so the real totals could be higher. The 2024 figure is low compared with the other years, so a few shows may be missing.",
+    "kind": "planted",
+    "planted_error": "Year boundary: a 2023 gig moved into 2024 (6 and 3)",
+    "source": "baseline rep1",
+    "expected_label": "wrong",
+    "id": "J15"
+  },
+  {
+    "case": "genialistid-last-concert",
+    "answer": "The last concert setlist.fm has for Genialistid was on 5 July 2024 at Tartu Laululava in Tartu, Estonia.\n\nSetlist.fm lists only two of their shows. The other was in 2006 at Tallinna Lauluväljak in Tallinn. They may have played other concerts that nobody has added to the site.",
+    "kind": "real",
+    "source": "baseline rep1",
+    "judge_verdict": true,
+    "judge_explanation": "The answer correctly names 5 July 2024 at Tartu Laululava in Tartu, Estonia, which matches the reference. The extra details are accurate: setlist.fm has two setlists, the other being 2006 at Tallinna Lauluväljak. The coverage caveat is clearly separated from the direct answer.",
+    "id": "J16"
+  },
+  {
+    "case": "tame-impala-countries-2025",
+    "answer": "In 2025, Tame Impala played in four countries, according to setlist.fm:\n\n- **Australia**: Brisbane, Melbourne and Sydney, in December.\n- **United States**: the Deadbeat tour in October and November, plus a Tiny Desk Concert in Washington and a set at The Lot Radio in New York.\n- **Mexico**: Naucalpan, on 10 October.\n- **Spain**: Barcelona, on 6 and 7 June. This included a show at Parc del Fòrum and one at the club Nitsa.\n\nSetlist.fm may not list every show, so this could be incomplete. A few of these, such as The Lot Radio and Nitsa, look like DJ sets or smaller appearances rather than full concerts.",
+    "kind": "real",
+    "source": "v1 rep0",
+    "judge_verdict": true,
+    "judge_explanation": "The answer lists exactly the four reference countries: Australia, the United States, Mexico and Spain. Its details match the reference too, including Sydney, Melbourne and Brisbane in December, Naucalpan in October and Barcelona in June. It names no extra countries, and the closing caveat about setlist.fm coverage is kept separate from the direct answer.",
+    "id": "J17"
+  },
+  {
+    "case": "national-countries-2025",
+    "answer": "According to setlist.fm, The National played no shows in 2025. A search filtered to 2025 returned zero setlists.\n\nThe unfiltered history jumps from October 2024 (Zen Diagram Tour, ending in New York on 25‑10‑2024) to two entries dated October 2026 (Berlin and San Sebastián). Nothing is listed in between. The 2026 dates are after today's date of 24 Nov 2026 only in the sense that they've already passed, so they may be filed oddly. I'd treat them with some caution.\n\nThe gap could mean the band took 2025 off. It could also mean setlist.fm is missing data for that year. I can't tell which from this source. If you know of 2025 shows, they probably just haven't been added to the site.",
+    "kind": "real",
+    "source": "v1 rep0",
+    "judge_verdict": true,
+    "judge_explanation": "The reference is empty, and the answer says plainly that setlist.fm has no 2025 shows and names no 2025 countries. It mentions 2024 and 2026 only as context and attributes them to those years. Its remark about the 2026 dates being 'filed oddly' is confused, but it does not touch the direct answer. The speculation about missing data is a coverage caveat kept apart from the direct answer.",
+    "id": "J18"
+  },
+  {
+    "case": "unknown-artist-metallica-gangsta-rap-big-band",
+    "answer": "I couldn't answer this. setlist.fm has no artist under \"Metallica Gangsta Rap Big Band\". I also tried \"Gangsta Rap Big Band\" and \"Metallica Gangsta Rap Bigband\", and neither returned a match.\n\nThe act may be listed under a different name, or it may not be tracked on setlist.fm at all. If you have another spelling or know where they played, I can search again. I can also pull the 2025 concert count for Metallica itself.",
+    "kind": "real",
+    "source": "baseline rep0",
+    "judge_verdict": true,
+    "judge_explanation": "The answer says setlist.fm has no artist by this name and reports no concert count, which matches the reference. Offering to look up Metallica is allowed by the grading notes.",
+    "id": "J19"
+  }
+]
