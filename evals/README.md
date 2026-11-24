@@ -4,13 +4,14 @@ Measures whether Claude uses the setlist.fm MCP tool well: given a real question
 it call the tool with the right arguments, and is its answer correct?
 
 Each case runs the question through Claude with the tools from `server.py` (the real MCP
-server, over stdio), loops until Claude answers, then grades three things:
+server, over stdio), loops until Claude answers, then grades it:
 
 | Metric | How it's graded | What it checks |
 |---|---|---|
 | `correct` | LLM judge (`claude-opus-5-5` by default) | Answer agrees with the ground truth; nothing missing, nothing invented |
 | `tool_ok` | Code | The first `get_setlists_by_artist_name` call used the expected artist (later calls may try other spellings) |
 | `compact_ok` | Code | Every call used the expected `compact_mode` |
+| `year_ok` | Code | Every call filtered by one of the expected years, and each expected year was requested (from v1) |
 
 It also records latency, tool-call count, tool-result size, tokens, and cost per attempt.
 
@@ -92,7 +93,7 @@ doesn't count: it measures evaluating, not using the tool.
 ## Adding a case and its ground truth
 
 1. Add an entry to `cases.yaml` with an `id`, `prompt`, `tags`, and `expected.artist_name`
-   / `expected.compact_mode`.
+   / `expected.compact_mode` / `expected.year` (a year, or a list for questions about several).
 2. Generate the ground truth from the live data, not from memory:
    ```bash
    python evals/ground_truth.py "The National" 2024

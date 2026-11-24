@@ -103,6 +103,17 @@ def get_setlists_by_artist_name(
             )
         ),
     ] = False,
+    year: Annotated[
+        int | None,
+        Field(ge=1900, le=2100, description="Only setlists from this year, e.g. 2025."),
+    ] = None,
+    country_code: Annotated[
+        str | None,
+        Field(
+            pattern=r"^[A-Za-z]{2}$",
+            description='Only setlists from this country: ISO 3166-1 alpha-2 code, e.g. "ES" for Spain.',
+        ),
+    ] = None,
 ) -> dict[str, Any]:
     """Get concert setlists for an artist by name, most recent first (20 per page).
 
@@ -112,16 +123,35 @@ def get_setlists_by_artist_name(
     artist was picked; `otherMatches` lists other artists the name matched.
 
     Dates are in dd-MM-yyyy format. `setlists.total` is the number of setlists across
-    all pages; request further pages with `page` to see older concerts.
+    all pages (with filters: the number of matching setlists); request further pages
+    with `page` to see older concerts.
+
+    Use `year` and `country_code` whenever the question is about a specific year or
+    country: only matching setlists are returned, so you need far fewer pages, and
+    `setlists.total` answers "how many" directly. For several years, call once per
+    year. Use `country_code` only for a country the question names; to find out which
+    countries the artist played in, filter by year alone. If nothing matches,
+    `setlists.total` is 0. Without filters you get the artist's full history.
 
     Use compact_mode=true when you only need to know when and where the artist played
     (tour history, recent or upcoming shows, cities or countries visited). It is much
     smaller and lets you scan many pages cheaply. Use the default (false) when you need
     the songs that were played.
     """
-    result = _get_setlists_by_artist_name(artist_name, page)
+    result = _get_setlists_by_artist_name(artist_name, page, year, country_code)
     if result is None:
         return {"error": f"No artist found on setlist.fm for '{artist_name}'."}
+
+    if result["setlists"] is None:  # setlist.fm returns 404 for an empty page
+        filtered = year is not None or country_code is not None
+        empty = {"setlist": [], "page": page, "itemsPerPage": 20}
+        if page == 1:
+            empty["total"] = 0
+            empty["note"] = ("No setlists match these filters." if filtered
+                             else "setlist.fm has no setlists for this artist.")
+        else:
+            empty["note"] = f"No setlists on page {page}: the results end on an earlier page."
+        return {**result, "setlists": empty}
 
     if compact_mode and result["setlists"]:
         setlists = result["setlists"]

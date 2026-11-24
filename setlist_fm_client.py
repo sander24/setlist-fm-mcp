@@ -36,6 +36,7 @@ session = requests_cache.CachedSession(
     urls_expire_after={
         "api.setlist.fm/rest/1.0/search/artists*": timedelta(days=7),
         "api.setlist.fm/rest/1.0/artist/*/setlists*": timedelta(days=1),
+        "api.setlist.fm/rest/1.0/search/setlists*": timedelta(days=1),
         "api.setlist.fm/rest/1.0/setlist/*": timedelta(days=30),
         "api.setlist.fm/rest/1.0/artist/*": timedelta(days=30),
     },
@@ -90,17 +91,35 @@ def get_setlists_by_artist_mbid(mbid: str, page: int = 1) -> dict | None:
     return _get(f"/artist/{mbid}/setlists", {"p": page})
 
 
-def get_setlists_by_artist_name(artist_name: str, page: int = 1) -> dict | None:
+def search_setlists(
+    mbid: str, page: int = 1, year: int | None = None, country_code: str | None = None
+) -> dict | None:
+    """Return a page of an artist's setlists filtered by year and/or country (ISO 3166-1
+    alpha-2 code), most recent first, or None (404) if the page has no setlists: either
+    nothing matches, or the page is past the last one."""
+    params: dict = {"artistMbid": mbid, "p": page}
+    if year is not None:
+        params["year"] = year
+    if country_code is not None:
+        params["countryCode"] = country_code.upper()
+    return _get("/search/setlists", params)
+
+
+def get_setlists_by_artist_name(
+    artist_name: str, page: int = 1, year: int | None = None, country_code: str | None = None
+) -> dict | None:
     """Look up an artist by name and return a page of their setlists.
 
     Picks the search result whose name matches exactly (case-insensitive),
     otherwise the most relevant one. Returns None if no artist was found.
+    With `year` or `country_code`, only matching setlists are returned (setlist
+    search); without them, the artist's full history (artist setlists endpoint).
 
     Result:
         {
             "artist": {...},          # the artist the setlists belong to
             "otherMatches": [...],    # other search results, for disambiguation
-            "setlists": {...} | None, # get_setlists_by_artist_mbid() result
+            "setlists": {...} | None, # a page of setlists; None if the page has none
         }
     """
     found = search_artists(artist_name)
@@ -112,8 +131,12 @@ def get_setlists_by_artist_name(artist_name: str, page: int = 1) -> dict | None:
         (a for a in artists if a.get("name", "").casefold() == artist_name.casefold()),
         artists[0],
     )
+    if year is None and country_code is None:
+        setlists = get_setlists_by_artist_mbid(artist["mbid"], page)
+    else:
+        setlists = search_setlists(artist["mbid"], page, year, country_code)
     return {
         "artist": artist,
         "otherMatches": [a for a in artists if a is not artist],
-        "setlists": get_setlists_by_artist_mbid(artist["mbid"], page),
+        "setlists": setlists,
     }

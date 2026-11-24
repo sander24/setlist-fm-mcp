@@ -65,6 +65,7 @@ METRICS = [  # first binary metric = headline
     {"id": "correct", "label": "Correct", "kind": "binary"},
     {"id": "tool_ok", "label": "Tool args OK", "kind": "binary"},
     {"id": "compact_ok", "label": "Compact mode", "kind": "binary"},
+    {"id": "year_ok", "label": "Year filter", "kind": "binary"},
 ]
 
 JUDGE_SYSTEM = """You grade answers produced by an AI assistant that looks up concert data \
@@ -277,7 +278,15 @@ def grade_tools(case: dict[str, Any], tool_calls: list[dict[str, Any]]) -> dict[
         want = bool(expected["compact_mode"])
         compact_ok = float(bool(calls) and all(bool(c["input"].get("compact_mode", False)) == want for c in calls))
 
-    return {"tool_ok": tool_ok, "compact_ok": compact_ok}
+    # Every call filters by one of the expected years, and every expected year is asked
+    # for: a question about 2023 and 2024 needs one call per year.
+    year_ok = None
+    if "year" in expected:
+        want = expected["year"] if isinstance(expected["year"], list) else [expected["year"]]
+        got = [c["input"].get("year") for c in calls]
+        year_ok = float(bool(calls) and all(y in want for y in got) and set(want) <= set(got))
+
+    return {"tool_ok": tool_ok, "compact_ok": compact_ok, "year_ok": year_ok}
 
 
 async def judge(claude: anthropic.AsyncAnthropic, case: dict[str, Any], answer: str, args: argparse.Namespace):

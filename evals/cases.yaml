@@ -20,6 +20,7 @@
   tags: [where-played, empty-result]
   expected:
     artist_name: The National
+    year: 2025
     compact_mode: true
     reference:
       year: 2025
@@ -35,6 +36,7 @@
   tags: [where-played, multi-page]
   expected:
     artist_name: Tame Impala
+    year: 2025
     compact_mode: true
     reference:
       year: 2025
@@ -54,6 +56,7 @@
   tags: [song-stats, multi-page, full-mode, date-range]
   expected:
     artist_name: Mogwai
+    year: 2025
     # compact_mode not graded: songs need full mode, but a compact call first to find
     # which pages hold Q1 2025 is a sensible (cheaper) strategy, not a mistake.
     reference:
@@ -82,6 +85,7 @@
   tags: [where-played, multi-page, country-filter]
   expected:
     artist_name: Tame Impala
+    year: 2025
     compact_mode: true
     reference:
       count: 2
@@ -103,6 +107,7 @@
   tags: [where-played, empty-result, country-filter]
   expected:
     artist_name: The Rolling Stones
+    year: 2024
     compact_mode: true
     reference:
       count: 0
@@ -163,6 +168,7 @@
   tags: [count, several-years, multi-page]
   expected:
     artist_name: My Dying Bride
+    year: [2023, 2024]
     compact_mode: true
     reference:
       "2023": "7 gigs: Dessel (15 Jun), Horten (19 Aug), Balve (8 Sep), Aleksandrów Łódzki (9 Sep), Würzburg (18 Nov), London (1 Dec), Bradford (14 Dec)"
