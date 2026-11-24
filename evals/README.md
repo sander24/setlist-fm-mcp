@@ -65,6 +65,30 @@ of medians: correct answers, tool calls, tokens (every token processed, cached o
 model cost.
 The setlist.fm API is free, but it needs `SETLISTFM_API_KEY` in `.env`.
 
+## Experiment v1: year and country filters
+
+Written down before v1 was built or run.
+
+**Change:** the tool gets optional `year` and `country_code` arguments. With either one set,
+it fetches setlists through setlist.fm's setlist search (`/search/setlists?artistMbid=...`)
+instead of paging through the artist's full history.
+
+**Hypothesis:** questions about one year or one country need far fewer pages, so answers
+get cheaper without getting less correct.
+
+**Comparison:** `baseline` (commit `532849b`, regraded with the first-call `tool_ok` rule in
+`68c7ce3`) against `v1`, both with `--reps 3` on all 8 cases, on `claude-sonnet-5-5` judged by
+`claude-opus-5-5`, run on the same day (2026-11-24).
+
+**Decision rule.** v1 is adopted only if both hold:
+
+1. *Guardrail:* at least 21/24 correct. The baseline scored 22/24, and with 24 attempts a
+   difference of one is noise, so v1 may be at most one below it.
+2. *Target:* total model cost at least 30% below the baseline's $1.666, so at most $1.166.
+
+Tokens, tool calls and latency are reported alongside, but they don't decide. Judge cost
+doesn't count: it measures evaluating, not using the tool.
+
 ## Adding a case and its ground truth
 
 1. Add an entry to `cases.yaml` with an `id`, `prompt`, `tags`, and `expected.artist_name`
