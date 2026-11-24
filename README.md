@@ -9,69 +9,29 @@ It exposes one tool, `get_setlists_by_artist_name`, built on the
 [setlist.fm REST API](https://api.setlist.fm/docs/1.0/index.html), plus an eval suite
 that measures how well Claude uses it.
 
-## Findings
+Main result: adding year and country filters to the tool cut the cost per answer by 56%
+with no loss in correctness, measured with an eval suite and a checked LLM judge
+([Findings](#findings)).
 
-**Adding year and country filters to the tool cut the cost per answer by 56%, with no
-loss in correctness.** Before the filters, a question like *"How many times did Tame
-Impala play in Spain in 2025?"* meant paging through the artist's whole history, newest
-first. With them, one call returns only the matching shows, and their count answers the
-question directly.
+## The tool
 
-| 24 attempts each (8 cases × 3) | Before (baseline) | After (v1, filters) | Change |
-|---|---:|---:|---:|
-| Correct answers | 22/24 | 22/24 | same |
-| Model cost | $1.67 | $0.73 | −56% |
-| Tool calls per answer | 3.75 | 1.79 | −52% |
-| Median latency | 11.7 s | 6.6 s | −43% |
+`get_setlists_by_artist_name(artist_name, page=1, compact_mode=false, year=None, country_code=None)`
 
-The biggest savings were on one-country and one-year questions: the Spain count went from
-6 tool calls to 1, and its cost fell 92%. The model used the country filter correctly in
-all 12 attempts where it was checked. It filtered to Spain and Germany when the question
-named them, and never filtered to one country when the question asked *which* countries.
+| Parameter | Meaning |
+|---|---|
+| `artist_name` | Artist or band name. Must be spelled correctly: setlist.fm search does not tolerate typos. |
+| `page` | Page of setlists, newest first, 20 per page. |
+| `compact_mode` | `true` returns only date, venue, city, country and tour per show; `false` also includes the full song lists. |
+| `year` | Only shows from this year, e.g. `2025`. |
+| `country_code` | Only shows in this country, as an ISO 3166-1 alpha-2 code, e.g. `ES` for Spain. |
 
-**How it was tested:**
+The result contains:
 
-- The model under test was `claude-sonnet-5-5`, graded by a different model,
-  `claude-opus-5-5`, so no model judged its own answers.
-- The decision rule was committed before v1 was built: at most one fewer correct answer
-  than the baseline, and at least 30% lower model cost.
-- Both variants ran on the same day against the same live setlist.fm data.
-
-**Results that needed a closer look:**
-
-- **One case looked worse, and a rerun showed it was most likely noise.** On *"Which three
-  songs did Mogwai play most in Q1 2025?"*, v1 scored 1/3 against the baseline's 3/3. The
-  model had received every show and miscounted one song. At 10 attempts each it was 10/10
-  against 8/10 (Fisher exact p = 0.47), and v1 was still 46% cheaper per answer.
-- **One case got more expensive.** setlist.fm has no 2025 shows for The National. After
-  getting "0 matching shows", the model makes a second, unfiltered call to check, which
-  doubles that case's cost. The answer stays correct.
-- **The evals caught a bug in the grader itself.** A check required every tool call to use
-  the exact artist name. It failed the model for retrying other spellings after "no artist
-  found", which is good behaviour. The check now looks only at the first call.
-
-**Checking the judge.** Every "correct" above is an LLM judge's verdict, so I checked the
-judge against my own labels. The set was 19 answers: 11 real ones and 8 copies of correct
-answers with one error planted in each, such as a wrong date, a dropped country or a hedged
-count. I labelled them blind, and the judge graded each one 3 times.
-
-- **The judge never passed an answer I labelled wrong.** It caught every planted error, in
-  every run.
-- **It agreed with my labels on 18 of 19.** The one difference: an answer that got the count
-  right but placed a show in "Ridgedale, NJ" (it's in Missouri). The judge failed it for the
-  false detail, and I'd have passed it.
-- **The check changed one grading rule.** The first round disagreed on a reply of "0 concerts"
-  for a band setlist.fm doesn't have. Looking at it, I decided 0 is acceptable when the answer
-  also says no such artist was found. I rewrote that case's grading notes, and re-judged
-  every stored answer with them.
-- **The judge is consistent on clear-cut answers, not on borderline ones.** Re-judging the
-  62 stored answers flipped 2 verdicts on cases whose notes hadn't changed. Both were
-  borderline: the Ridgedale answer, and one that opens with "three countries" and ends with
-  "four". The flips cancelled out, and both variants stayed at 22/24.
-
-**Limits:** eight cases is a small set, and 19 labelled answers check the judge on these
-cases only. The full write-up, with per-case numbers, is in
-[evals/README.md](evals/README.md#experiment-v1-year-and-country-filters).
+- `artist`: the artist that was matched;
+- `otherMatches`: other artists the name matched, so the model can tell when the name
+  was ambiguous;
+- `setlists`: the page of setlists, with `total` for paging. With filters, `total` is the
+  number of matching shows, and 0 means none matched (distinct from "no artist found").
 
 ## Quick start
 
@@ -119,25 +79,16 @@ Vennaskond play their last three concerts?"*
 claude mcp add setlist-fm -- /path/to/setlist-fm-mcp/.venv/bin/python /path/to/setlist-fm-mcp/server.py
 ```
 
-## The tool
+## Live smoke test
 
-`get_setlists_by_artist_name(artist_name, page=1, compact_mode=false, year=None, country_code=None)`
+The smoke test is a free way to check that your API key works and that setlist.fm still
+returns what the server expects, without paying for an eval run. It starts the MCP server with an empty cache, sends a few real
+requests (exact match, paging, full and compact mode, ambiguous name, unknown artist)
+and checks the response shape. It doesn't call Claude and needs only `SETLISTFM_API_KEY`.
 
-| Parameter | Meaning |
-|---|---|
-| `artist_name` | Artist or band name. Must be spelled correctly: setlist.fm search does not tolerate typos. |
-| `page` | Page of setlists, newest first, 20 per page. |
-| `compact_mode` | `true` returns only date, venue, city, country and tour per show; `false` also includes the full song lists. |
-| `year` | Only shows from this year, e.g. `2025`. |
-| `country_code` | Only shows in this country, as an ISO 3166-1 alpha-2 code, e.g. `ES` for Spain. |
-
-The result contains:
-
-- `artist`: the artist that was matched;
-- `otherMatches`: other artists the name matched, so the model can tell when the name
-  was ambiguous;
-- `setlists`: the page of setlists, with `total` for paging. With filters, `total` is the
-  number of matching shows, and 0 means none matched (distinct from "no artist found").
+```bash
+python smoke_test.py    # exits non-zero if any check fails
+```
 
 ## Design decisions
 
@@ -208,26 +159,69 @@ pip install -r evals/requirements.txt   # and add ANTHROPIC_API_KEY to .env
 python evals/run_evals.py
 ```
 
-## Live smoke test
+## Findings
 
-The smoke test is a free way to check that your API key works and that setlist.fm still
-returns what the server expects, without paying for an eval run. It starts the MCP server with an empty cache, sends a few real
-requests (exact match, paging, full and compact mode, ambiguous name, unknown artist)
-and checks the response shape. It doesn't call Claude and needs only `SETLISTFM_API_KEY`.
+**Adding year and country filters to the tool cut the cost per answer by 56%, with no
+loss in correctness.** Before the filters, a question like *"How many times did Tame
+Impala play in Spain in 2025?"* meant paging through the artist's whole history, newest
+first. With them, one call returns only the matching shows, and their count answers the
+question directly.
 
-```bash
-python smoke_test.py    # exits non-zero if any check fails
-```
+| 24 attempts each (8 cases × 3) | Before (baseline) | After (v1, filters) | Change |
+|---|---:|---:|---:|
+| Correct answers | 22/24 | 22/24 | same |
+| Model cost | $1.67 | $0.73 | −56% |
+| Tool calls per answer | 3.75 | 1.79 | −52% |
+| Median latency | 11.7 s | 6.6 s | −43% |
 
-## Project layout
+The biggest savings were on one-country and one-year questions: the Spain count went from
+6 tool calls to 1, and its cost fell 92%. The model used the country filter correctly in
+all 12 attempts where it was checked. It filtered to Spain and Germany when the question
+named them, and never filtered to one country when the question asked *which* countries.
 
-| Path | What it is |
-|---|---|
-| `server.py` | MCP server: the tool definition, compact mode, call logging |
-| `setlist_fm_client.py` | setlist.fm API client: requests, caching, retries |
-| `try_client.py` | Console script for trying the client by hand |
-| `smoke_test.py` | Live check of the MCP server against the real setlist.fm API |
-| `evals/` | Eval runner, cases, ground-truth helper, results |
+**How it was tested:**
+
+- The model under test was `claude-sonnet-5-5`, graded by a different model,
+  `claude-opus-5-5`, so no model judged its own answers.
+- The decision rule was committed before v1 was built: at most one fewer correct answer
+  than the baseline, and at least 30% lower model cost.
+- Both variants ran on the same day against the same live setlist.fm data.
+
+**Results that needed a closer look:**
+
+- **One case looked worse, and a rerun showed it was most likely noise.** On *"Which three
+  songs did Mogwai play most in Q1 2025?"*, v1 scored 1/3 against the baseline's 3/3. The
+  model had received every show and miscounted one song. At 10 attempts each it was 10/10
+  against 8/10 (Fisher exact p = 0.47), and v1 was still 46% cheaper per answer.
+- **One case got more expensive.** setlist.fm has no 2025 shows for The National. After
+  getting "0 matching shows", the model makes a second, unfiltered call to check, which
+  doubles that case's cost. The answer stays correct.
+- **The evals caught a bug in the grader itself.** A check required every tool call to use
+  the exact artist name. It failed the model for retrying other spellings after "no artist
+  found", which is good behaviour. The check now looks only at the first call.
+
+**Checking the judge.** Every "correct" above is an LLM judge's verdict, so I checked the
+judge against my own labels. The set was 19 answers: 11 real ones and 8 copies of correct
+answers with one error planted in each, such as a wrong date, a dropped country or a hedged
+count. I labelled them blind, and the judge graded each one 3 times.
+
+- **The judge never passed an answer I labelled wrong.** It caught every planted error, in
+  every run.
+- **It agreed with my labels on 18 of 19.** The one difference: an answer that got the count
+  right but placed a show in "Ridgedale, NJ" (it's in Missouri). The judge failed it for the
+  false detail, and I'd have passed it.
+- **The check changed one grading rule.** The first round disagreed on a reply of "0 concerts"
+  for a band setlist.fm doesn't have. Looking at it, I decided 0 is acceptable when the answer
+  also says no such artist was found. I rewrote that case's grading notes, and re-judged
+  every stored answer with them.
+- **The judge is consistent on clear-cut answers, not on borderline ones.** Re-judging the
+  62 stored answers flipped 2 verdicts on cases whose notes hadn't changed. Both were
+  borderline: the Ridgedale answer, and one that opens with "three countries" and ends with
+  "four". The flips cancelled out, and both variants stayed at 22/24.
+
+**Limits:** eight cases is a small set, and 19 labelled answers check the judge on these
+cases only. The full write-up, with per-case numbers, is in
+[evals/README.md](evals/README.md#experiment-v1-year-and-country-filters).
 
 ## Limitations and next steps
 
@@ -240,6 +234,16 @@ python smoke_test.py    # exits non-zero if any check fails
 - Grow the eval set beyond eight cases: more song questions, ambiguous names.
 - setlist.fm data is crowd-sourced, so missing shows mean "not on setlist.fm", not
   "didn't happen". Check setlist.fm's API terms before any commercial use.
+
+## Project layout
+
+| Path | What it is |
+|---|---|
+| `server.py` | MCP server: the tool definition, compact mode, call logging |
+| `setlist_fm_client.py` | setlist.fm API client: requests, caching, retries |
+| `try_client.py` | Console script for trying the client by hand |
+| `smoke_test.py` | Live check of the MCP server against the real setlist.fm API |
+| `evals/` | Eval runner, cases, ground-truth helper, results |
 
 ## License
 
