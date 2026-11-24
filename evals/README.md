@@ -120,11 +120,25 @@ through the artist's whole history, and with a country filter, `setlists.total` 
 
 **Caveats:**
 
-- **Mogwai fell from 3/3 to 1/3.** In both failing attempts the tool returned all 25 Q1
-  shows, and the model still counted Lion Rumpus as 23 instead of 24. Recounting from the
-  data it received gives 24, so the reference and the judge are right: the errors are in the
-  counting, not missing data. With 3 attempts per variant, it isn't clear whether v1 caused
-  this or it is noise. Running this case at about 10 attempts on each variant would tell.
+- **Mogwai fell from 3/3 to 1/3, which a follow-up run showed was most likely noise.** In
+  both failing attempts the tool returned all 25 Q1 shows, and the model still counted Lion
+  Rumpus as 23 instead of 24. Recounting from the data it received gives 24, so the reference
+  and the judge are right: the errors are in the counting, not missing data. To check whether
+  v1 caused them, this case was run to 10 attempts per variant on the same day (the baseline's
+  extra attempts on `681a203`, which has the baseline tool code):
+
+  | Mogwai, 10 attempts each | Baseline | v1 |
+  |---|---:|---:|
+  | Correct | 10/10 | 8/10 |
+  | Median model $ per attempt | 0.276 | 0.148 (−46%) |
+  | Median tokens | 273,094 | 89,054 |
+  | Median tool calls | 7.5 | 4 |
+
+  All 7 extra v1 attempts were correct, so the only failures are the two above. A two-sided
+  Fisher exact test gives p = 0.47: no evidence that v1 hurts accuracy here, though 10
+  attempts each would only reveal a large drop. The tables above stay at the 24 attempts
+  the decision rule judged; the extra attempts are in both variants' `results.jsonl`, so the
+  runner's summary for each now shows 31.
 - **The National cost more.** setlist.fm has no 2025 shows for them, and after getting
   `total: 0` the model makes a second, unfiltered call to check. That follow-up call also
   fails `year_ok` (15/18). Like the earlier `tool_ok` rule, that check fails a reasonable
