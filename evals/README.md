@@ -9,7 +9,7 @@ server, over stdio), loops until Claude answers, then grades three things:
 | Metric | How it's graded | What it checks |
 |---|---|---|
 | `correct` | LLM judge (`claude-opus-5-5` by default) | Answer agrees with the ground truth; nothing missing, nothing invented |
-| `tool_ok` | Code | Every `get_setlists_by_artist_name` call used the expected artist |
+| `tool_ok` | Code | The first `get_setlists_by_artist_name` call used the expected artist (later calls may try other spellings) |
 | `compact_ok` | Code | Every call used the expected `compact_mode` |
 
 It also records latency, tool-call count, tool-result size, tokens, and cost per attempt.

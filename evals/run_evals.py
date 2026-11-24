@@ -264,10 +264,13 @@ def grade_tools(case: dict[str, Any], tool_calls: list[dict[str, Any]]) -> dict[
     expected = case.get("expected", {})
     calls = [c for c in tool_calls if c["name"] == "get_setlists_by_artist_name"]
 
+    # Only the first call has to use the expected name: it shows the user's name reached the
+    # tool unchanged. After a miss, retrying other spellings is fine; what the model then
+    # does with the results (e.g. passing off another artist's shows) is the judge's to grade.
     tool_ok = None
     if "artist_name" in expected:
         want = expected["artist_name"].casefold()
-        tool_ok = float(bool(calls) and all(c["input"].get("artist_name", "").casefold() == want for c in calls))
+        tool_ok = float(bool(calls) and calls[0]["input"].get("artist_name", "").casefold() == want)
 
     compact_ok = None
     if "compact_mode" in expected:
