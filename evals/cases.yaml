@@ -21,6 +21,7 @@
   expected:
     artist_name: The National
     year: 2025
+    country_code: null
     compact_mode: true
     reference:
       year: 2025
@@ -37,6 +38,7 @@
   expected:
     artist_name: Tame Impala
     year: 2025
+    country_code: null
     compact_mode: true
     reference:
       year: 2025
@@ -86,6 +88,7 @@
   expected:
     artist_name: Tame Impala
     year: 2025
+    country_code: ES
     compact_mode: true
     reference:
       count: 2
@@ -108,6 +111,7 @@
   expected:
     artist_name: The Rolling Stones
     year: 2024
+    country_code: DE
     compact_mode: true
     reference:
       count: 0

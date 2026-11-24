@@ -12,6 +12,7 @@ server, over stdio), loops until Claude answers, then grades it:
 | `tool_ok` | Code | The first `get_setlists_by_artist_name` call used the expected artist (later calls may try other spellings) |
 | `compact_ok` | Code | Every call used the expected `compact_mode` |
 | `year_ok` | Code | Every call filtered by one of the expected years, and each expected year was requested (from v1) |
+| `country_ok` | Code | Every call used the expected `country_code`; for `null`, no call filtered by country (from v1) |
 
 It also records latency, tool-call count, tool-result size, tokens, and cost per attempt.
 
@@ -116,7 +117,11 @@ decision rule hold: 22/24 correct (the same as the baseline), and total model co
 
 The savings come from the cases about one year or one country. They no longer page
 through the artist's whole history, and with a country filter, `setlists.total` answers
-"how many" in a single call.
+"how many" in a single call. The model used the filters as intended: the `country_code`
+check passed in all 12 graded attempts. It always used `ES` and `DE` for the Spain and Germany
+questions, and never narrowed the two "which countries" questions to one country. That
+check (`country_ok`) was added after the run and graded from the stored tool-call
+arguments.
 
 **Caveats:**
 
@@ -149,7 +154,8 @@ through the artist's whole history, and with a country filter, `setlists.total` 
 ## Adding a case and its ground truth
 
 1. Add an entry to `cases.yaml` with an `id`, `prompt`, `tags`, and `expected.artist_name`
-   / `expected.compact_mode` / `expected.year` (a year, or a list for questions about several).
+   / `expected.compact_mode` / `expected.year` (a year, or a list for questions about several) / `expected.country_code`
+   (a code, or `null` when the question must not be narrowed to one country).
 2. Generate the ground truth from the live data, not from memory:
    ```bash
    python evals/ground_truth.py "The National" 2024

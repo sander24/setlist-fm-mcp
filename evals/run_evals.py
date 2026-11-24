@@ -66,6 +66,7 @@ METRICS = [  # first binary metric = headline
     {"id": "tool_ok", "label": "Tool args OK", "kind": "binary"},
     {"id": "compact_ok", "label": "Compact mode", "kind": "binary"},
     {"id": "year_ok", "label": "Year filter", "kind": "binary"},
+    {"id": "country_ok", "label": "Country filter", "kind": "binary"},
 ]
 
 JUDGE_SYSTEM = """You grade answers produced by an AI assistant that looks up concert data \
@@ -286,7 +287,15 @@ def grade_tools(case: dict[str, Any], tool_calls: list[dict[str, Any]]) -> dict[
         got = [c["input"].get("year") for c in calls]
         year_ok = float(bool(calls) and all(y in want for y in got) and set(want) <= set(got))
 
-    return {"tool_ok": tool_ok, "compact_ok": compact_ok, "year_ok": year_ok}
+    # A country code: every call filters by it. null: no call filters by country (asking
+    # which countries an artist played in must not be narrowed to one of them).
+    country_ok = None
+    if "country_code" in expected:
+        want = expected["country_code"].upper() if expected["country_code"] else None
+        got = [(c["input"].get("country_code") or "").upper() or None for c in calls]
+        country_ok = float(bool(calls) and all(g == want for g in got))
+
+    return {"tool_ok": tool_ok, "compact_ok": compact_ok, "year_ok": year_ok, "country_ok": country_ok}
 
 
 async def judge(claude: anthropic.AsyncAnthropic, case: dict[str, Any], answer: str, args: argparse.Namespace):

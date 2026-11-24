@@ -19,6 +19,11 @@
       "id": "year_ok",
       "label": "Year filter",
       "kind": "binary"
+    },
+    {
+      "id": "country_ok",
+      "label": "Country filter",
+      "kind": "binary"
     }
   ]
 }
