@@ -9,9 +9,10 @@ It exposes one tool, `get_setlists_by_artist_name`, built on the
 [setlist.fm REST API](https://api.setlist.fm/docs/1.0/index.html), plus an eval suite
 that measures how well Claude uses it.
 
-Main result: adding year and country filters to the tool cut the cost per answer by 56%
-with no loss in correctness, measured with an eval suite and a checked LLM judge
-([Findings](#findings)).
+Main result: adding year and country filters to the tool cut the cost per answer by 56%,
+tool calls by 52% and median latency by 43%, with no loss in correctness. It was measured
+with an eval suite, a decision rule committed before the change, and an LLM judge checked
+against hand labels ([write-up](evals/README.md#experiment-v1-year-and-country-filters)).
 
 ## The tool
 
@@ -110,7 +111,8 @@ which mode.
 about one year or one country means paging through an artist's whole history. With a
 filter, the tool uses setlist.fm's setlist search instead, so only matching shows come
 back. The change was tested as an eval experiment against the version without filters
-(see [Findings](#findings)).
+and cut the cost per answer by 56% with no loss in correctness
+([write-up](evals/README.md#experiment-v1-year-and-country-filters)).
 
 **Caching and retries, because API quota is the real constraint.** setlist.fm keys are
 rate-limited per second and per day. Responses are cached on disk (SQLite via
@@ -134,101 +136,43 @@ protocol spec directly.
 ## Evals
 
 `evals/` runs realistic questions through Claude with the real MCP server and grades
-whether the tool was called correctly (artist, `compact_mode`, year and country filters), and whether
-the answer is correct (an LLM judge compares it with ground truth). The data comes from
-the live setlist.fm API. The cases ask about 2025 or earlier, so the ground truth stays
-valid while new concerts are added.
+whether the tool was called correctly (artist, `compact_mode`, year and country filters),
+and whether the answer is correct (an LLM judge compares it with ground truth). The data
+comes from the live setlist.fm API. The cases ask about 2025 or earlier, so the ground
+truth stays valid while new concerts are added.
 
-| Case | What it tests | Correct: baseline → v1 |
+Results for the current tool (`claude-sonnet-5-5`, judged by `claude-opus-5-5`, 3 attempts
+per case):
+
+| Case | What it tests | Correct |
 |---|---|---|
-| The National, countries in 2025 | No 2025 shows exist: does the model say so or invent some? | 3/3 → 3/3 |
-| Tame Impala, countries in 2025 | 2025 shows come after several pages of 2026 ones: does the model keep paging? | 1/3 → 3/3 |
-| Tame Impala, Spain shows in 2025 | Spain shows in 2026 come first: is the count 2, not 4? | 3/3 → 3/3 |
-| The Rolling Stones, Germany shows in 2024 | A country they play often (3 shows in 2022) but not in 2024: is the count 0? | 0/3 → 3/3 |
-| Genialistid, last concert | No year in the question, and only 2 setlists on setlist.fm: does it name the latest (Tartu, 5 Jul 2024) without inventing a later one? | 3/3 → 3/3 |
-| Unknown artist, "Metallica Gangsta Rap Big Band" | No such artist on setlist.fm: does it say so, without inventing shows or passing off Metallica's? | 3/3 → 3/3 |
-| My Dying Bride, gigs in each of 2023 and 2024 | Two years in one question, with a close year boundary and 17 gigs in 2025 coming first: is it 7 and 2? | 3/3 → 3/3 |
-| Mogwai, top three songs in Q1 2025 | Songs need full mode, Q1 starts and ends mid-page, and two songs tie for second: are the counts exact? | 3/3 → 1/3 (9/10 → 7/10 at 10 attempts) |
+| The National, countries in 2025 | No 2025 shows exist: does the model say so or invent some? | 3/3 |
+| Tame Impala, countries in 2025 | 2025 shows come after several pages of 2026 ones: does the model find them all? | 3/3 |
+| Tame Impala, Spain shows in 2025 | Spain shows in 2026 come first: is the count 2, not 4? | 3/3 |
+| The Rolling Stones, Germany shows in 2024 | A country they play often (3 shows in 2022) but not in 2024: is the count 0? | 3/3 |
+| Genialistid, last concert | No year in the question, and only 2 setlists on setlist.fm: does it name the latest (Tartu, 5 Jul 2024) without inventing a later one? | 3/3 |
+| Unknown artist, "Metallica Gangsta Rap Big Band" | No such artist on setlist.fm: does it say so, without inventing shows or passing off Metallica's? | 3/3 |
+| My Dying Bride, gigs in each of 2023 and 2024 | Two years in one question, with a close year boundary and 17 gigs in 2025 coming first: is it 7 and 2? | 3/3 |
+| Mogwai, top three songs in Q1 2025 | Songs need full mode, Q1 starts and ends mid-page, and two songs tie for second: are the counts exact? | 1/3 |
 
-Model `claude-sonnet-5-5`, judged by `claude-opus-5-5`, 3 attempts per case, both variants
-on the same day. Eight cases is a starting point, not a benchmark. See
-[evals/README.md](evals/README.md) for running the evals and adding cases.
+| 24 attempts | Current tool |
+|---|---:|
+| Correct | 22/24 |
+| Model cost | $0.73 (about $0.03 per answer) |
+| Tool calls per answer | 1.79 |
+| Median latency | 6.6 s |
+
+The weak spot is exact counting over many setlists: in the Mogwai failures the model had
+every show and still miscounted one song. Eight cases is a starting point, not a benchmark.
+
+[evals/README.md](evals/README.md) has the full record: the baseline, the v1 experiment
+and its decision rule, per-case numbers, the check of the LLM judge against hand labels,
+and how to run the evals and add cases.
 
 ```bash
 pip install -r evals/requirements.txt   # and add ANTHROPIC_API_KEY to .env
 python evals/run_evals.py
 ```
-
-## Findings
-
-**Adding year and country filters to the tool cut the cost per answer by 56%, with no
-loss in correctness.** Before the filters, a question like *"How many times did Tame
-Impala play in Spain in 2025?"* meant paging through the artist's whole history, newest
-first. With them, one call returns only the matching shows, and their count answers the
-question directly.
-
-| 24 attempts each (8 cases × 3) | Before (baseline) | After (v1, filters) | Change |
-|---|---:|---:|---:|
-| Correct answers | 19/24 | 22/24 | +3 |
-| Model cost | $1.67 | $0.73 | −56% |
-| Tool calls per answer | 3.75 | 1.79 | −52% |
-| Median latency | 11.7 s | 6.6 s | −43% |
-
-The biggest savings were on one-country and one-year questions: the Spain count went from
-6 tool calls to 1, and its cost fell 92%. The model used the country filter correctly in
-all 12 attempts where it was checked. It filtered to Spain and Germany when the question
-named them, and never filtered to one country when the question asked *which* countries.
-
-The baseline's lower score comes from one case: all three of its Rolling Stones answers
-place the tour's last show in "Ridgedale, NJ" (it's in Missouri). With a country filter, v1
-never sees that show, so it has nothing to get wrong. That's a side effect of fetching less
-data, so I read the result as no loss in correctness rather than a gain.
-
-**How it was tested:**
-
-- The model under test was `claude-sonnet-5-5`, graded by a different model,
-  `claude-opus-5-5`, so no model judged its own answers.
-- The decision rule was committed before v1 was built: at most one fewer correct answer
-  than the baseline, and at least 30% lower model cost. It held under the original grading
-  (22/24 each) and under the stricter rubric adopted later (see below).
-- Both variants ran on the same day against the same live setlist.fm data.
-
-**Results that needed a closer look:**
-
-- **One case looked worse, and a rerun showed it was most likely noise.** On *"Which three
-  songs did Mogwai play most in Q1 2025?"*, v1 scored 1/3 against the baseline's 3/3. The
-  model had received every show and miscounted one song. At 10 attempts each it was 9/10
-  against 7/10 (Fisher exact p = 0.58), and v1 was still 46% cheaper per answer.
-- **One case got more expensive.** setlist.fm has no 2025 shows for The National. After
-  getting "0 matching shows", the model makes a second, unfiltered call to check, which
-  doubles that case's cost. The answer stays correct.
-- **The evals caught a bug in the grader itself.** A check required every tool call to use
-  the exact artist name. It failed the model for retrying other spellings after "no artist
-  found", which is good behaviour. The check now looks only at the first call.
-
-**Checking the judge.** Every "correct" above is an LLM judge's verdict, so I checked the
-judge against my own labels. The set was 19 answers: 11 real ones and 8 copies of correct
-answers with one error planted in each, such as a wrong date, a dropped country or a hedged
-count. I labelled them blind, and the judge graded each one 3 times.
-
-- **The judge never passed an answer I labelled wrong.** It caught every planted error, in
-  every run.
-- **The check changed one case's grading notes.** The first round disagreed on a reply of
-  "0 concerts" for a band setlist.fm doesn't have. Looking at it, I decided 0 is acceptable
-  when the answer also says no such artist was found. I rewrote that case's grading notes,
-  and re-judged every stored answer with them.
-- **It found a rule the rubric was missing.** The judge prompt only covered the *direct*
-  answer, so a correct count with a false side detail ("Ridgedale, NJ") was left to the
-  judge's discretion. It failed that answer 7 times and passed it, or the same error in
-  other answers, 3 times. I decided a wrong supporting detail should fail an answer, and
-  added that rule to the judge prompt, with details it can't check still allowed.
-- **With the rule written down, it agreed with my labels on all 19**, with no disagreement
-  between its 3 runs on any answer. I then re-judged every stored answer with the new
-  prompt, which is where the baseline's 19/24 comes from.
-
-**Limits:** eight cases is a small set, and 19 labelled answers check the judge on these
-cases only. The full write-up, with per-case numbers, is in
-[evals/README.md](evals/README.md#experiment-v1-year-and-country-filters).
 
 ## Limitations and next steps
 
@@ -239,6 +183,8 @@ cases only. The full write-up, with per-case numbers, is in
   which makes even compact responses ~12,600 characters. Trimming it is the next eval
   experiment.
 - Grow the eval set beyond eight cases: more song questions, ambiguous names.
+- Give the LLM judge the data the model saw, so it checks supporting details against
+  setlist.fm instead of its own knowledge.
 - setlist.fm data is crowd-sourced, so missing shows mean "not on setlist.fm", not
   "didn't happen". Check setlist.fm's API terms before any commercial use.
 
