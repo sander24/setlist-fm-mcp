@@ -144,11 +144,11 @@ valid while new concerts are added.
 | The National, countries in 2025 | No 2025 shows exist: does the model say so or invent some? | 3/3 → 3/3 |
 | Tame Impala, countries in 2025 | 2025 shows come after several pages of 2026 ones: does the model keep paging? | 1/3 → 3/3 |
 | Tame Impala, Spain shows in 2025 | Spain shows in 2026 come first: is the count 2, not 4? | 3/3 → 3/3 |
-| The Rolling Stones, Germany shows in 2024 | A country they play often (3 shows in 2022) but not in 2024: is the count 0? | 3/3 → 3/3 |
+| The Rolling Stones, Germany shows in 2024 | A country they play often (3 shows in 2022) but not in 2024: is the count 0? | 0/3 → 3/3 |
 | Genialistid, last concert | No year in the question, and only 2 setlists on setlist.fm: does it name the latest (Tartu, 5 Jul 2024) without inventing a later one? | 3/3 → 3/3 |
 | Unknown artist, "Metallica Gangsta Rap Big Band" | No such artist on setlist.fm: does it say so, without inventing shows or passing off Metallica's? | 3/3 → 3/3 |
 | My Dying Bride, gigs in each of 2023 and 2024 | Two years in one question, with a close year boundary and 17 gigs in 2025 coming first: is it 7 and 2? | 3/3 → 3/3 |
-| Mogwai, top three songs in Q1 2025 | Songs need full mode, Q1 starts and ends mid-page, and two songs tie for second: are the counts exact? | 3/3 → 1/3 (10/10 → 8/10 at 10 attempts) |
+| Mogwai, top three songs in Q1 2025 | Songs need full mode, Q1 starts and ends mid-page, and two songs tie for second: are the counts exact? | 3/3 → 1/3 (9/10 → 7/10 at 10 attempts) |
 
 Model `claude-sonnet-5-5`, judged by `claude-opus-5-5`, 3 attempts per case, both variants
 on the same day. Eight cases is a starting point, not a benchmark. See
@@ -169,7 +169,7 @@ question directly.
 
 | 24 attempts each (8 cases × 3) | Before (baseline) | After (v1, filters) | Change |
 |---|---:|---:|---:|
-| Correct answers | 22/24 | 22/24 | same |
+| Correct answers | 19/24 | 22/24 | +3 |
 | Model cost | $1.67 | $0.73 | −56% |
 | Tool calls per answer | 3.75 | 1.79 | −52% |
 | Median latency | 11.7 s | 6.6 s | −43% |
@@ -179,20 +179,26 @@ The biggest savings were on one-country and one-year questions: the Spain count 
 all 12 attempts where it was checked. It filtered to Spain and Germany when the question
 named them, and never filtered to one country when the question asked *which* countries.
 
+The baseline's lower score comes from one case: all three of its Rolling Stones answers
+place the tour's last show in "Ridgedale, NJ" (it's in Missouri). With a country filter, v1
+never sees that show, so it has nothing to get wrong. That's a side effect of fetching less
+data, so I read the result as no loss in correctness rather than a gain.
+
 **How it was tested:**
 
 - The model under test was `claude-sonnet-5-5`, graded by a different model,
   `claude-opus-5-5`, so no model judged its own answers.
 - The decision rule was committed before v1 was built: at most one fewer correct answer
-  than the baseline, and at least 30% lower model cost.
+  than the baseline, and at least 30% lower model cost. It held under the original grading
+  (22/24 each) and under the stricter rubric adopted later (see below).
 - Both variants ran on the same day against the same live setlist.fm data.
 
 **Results that needed a closer look:**
 
 - **One case looked worse, and a rerun showed it was most likely noise.** On *"Which three
   songs did Mogwai play most in Q1 2025?"*, v1 scored 1/3 against the baseline's 3/3. The
-  model had received every show and miscounted one song. At 10 attempts each it was 10/10
-  against 8/10 (Fisher exact p = 0.47), and v1 was still 46% cheaper per answer.
+  model had received every show and miscounted one song. At 10 attempts each it was 9/10
+  against 7/10 (Fisher exact p = 0.58), and v1 was still 46% cheaper per answer.
 - **One case got more expensive.** setlist.fm has no 2025 shows for The National. After
   getting "0 matching shows", the model makes a second, unfiltered call to check, which
   doubles that case's cost. The answer stays correct.
@@ -207,17 +213,18 @@ count. I labelled them blind, and the judge graded each one 3 times.
 
 - **The judge never passed an answer I labelled wrong.** It caught every planted error, in
   every run.
-- **It agreed with my labels on 18 of 19.** The one difference: an answer that got the count
-  right but placed a show in "Ridgedale, NJ" (it's in Missouri). The judge failed it for the
-  false detail, and I'd have passed it.
-- **The check changed one grading rule.** The first round disagreed on a reply of "0 concerts"
-  for a band setlist.fm doesn't have. Looking at it, I decided 0 is acceptable when the answer
-  also says no such artist was found. I rewrote that case's grading notes, and re-judged
-  every stored answer with them.
-- **The judge is consistent on clear-cut answers, not on borderline ones.** Re-judging the
-  62 stored answers flipped 2 verdicts on cases whose notes hadn't changed. Both were
-  borderline: the Ridgedale answer, and one that opens with "three countries" and ends with
-  "four". The flips cancelled out, and both variants stayed at 22/24.
+- **The check changed one case's grading notes.** The first round disagreed on a reply of
+  "0 concerts" for a band setlist.fm doesn't have. Looking at it, I decided 0 is acceptable
+  when the answer also says no such artist was found. I rewrote that case's grading notes,
+  and re-judged every stored answer with them.
+- **It found a rule the rubric was missing.** The judge prompt only covered the *direct*
+  answer, so a correct count with a false side detail ("Ridgedale, NJ") was left to the
+  judge's discretion. It failed that answer 7 times and passed it, or the same error in
+  other answers, 3 times. I decided a wrong supporting detail should fail an answer, and
+  added that rule to the judge prompt, with details it can't check still allowed.
+- **With the rule written down, it agreed with my labels on all 19**, with no disagreement
+  between its 3 runs on any answer. I then re-judged every stored answer with the new
+  prompt, which is where the baseline's 19/24 comes from.
 
 **Limits:** eight cases is a small set, and 19 labelled answers check the judge on these
 cases only. The full write-up, with per-case numbers, is in

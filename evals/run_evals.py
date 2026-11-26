@@ -83,6 +83,10 @@ country, a wrong year, an invented show).
 does not invent results.
 - Context about other years or caveats about setlist.fm coverage is fine, as long as it is \
 clearly separated from the direct answer.
+- No supporting detail is incorrect: a side detail that is wrong (for example a venue placed \
+in the wrong city or state, or a wrong date for a show) fails the answer, even when the \
+direct answer is right. Details you cannot check are fine, as long as nothing in the \
+reference contradicts them.
 Naming variants of the same thing (e.g. "UK" vs "United Kingdom") count as equal.
 Judge only correctness against the reference, not style or length."""
 

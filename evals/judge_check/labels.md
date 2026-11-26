@@ -581,9 +581,9 @@ Reason:
 >
 > Their most recent German shows were in 2022 on the "Sixty" tour. They played Munich on 5 June, Gelsenkirchen on 27 July and Berlin on 3 August.
 
-Label: correct
+Label: wrong
 
-Reason: 
+Reason: The side-detail "Ridgedale, NJ" is incorrect. The correct one is "Ridgedale, MO".
 
 ---
 

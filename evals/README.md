@@ -8,7 +8,7 @@ server, over stdio), loops until Claude answers, then grades it:
 
 | Metric | How it's graded | What it checks |
 |---|---|---|
-| `correct` | LLM judge (`claude-opus-5-5` by default) | Answer agrees with the ground truth; nothing missing, nothing invented |
+| `correct` | LLM judge (`claude-opus-5-5` by default) | Answer agrees with the ground truth; nothing missing, nothing invented, no wrong supporting detail |
 | `tool_ok` | Code | The first `get_setlists_by_artist_name` call used the expected artist (later calls may try other spellings) |
 | `compact_ok` | Code | Every call used the expected `compact_mode` |
 | `year_ok` | Code | Every call filtered by one of the expected years, and each expected year was requested (from v1) |
@@ -94,11 +94,12 @@ doesn't count: it measures evaluating, not using the tool.
 ### Result: adopted
 
 v1 ran on commit `c063942`, on the same day as the baseline. Both conditions of the
-decision rule hold: 22/24 correct (the same as the baseline), and total model cost 56% lower.
+decision rule hold: 22/24 correct (the baseline scored 22/24 when the decision was made, and
+19/24 under the stricter rubric adopted later, see below), and total model cost 56% lower.
 
 | | Baseline | v1 | Change |
 |---|---:|---:|---:|
-| Correct | 22/24 | 22/24 | same |
+| Correct | 19/24 | 22/24 | +3 |
 | Model cost | $1.666 | $0.725 | −56% |
 | Model tokens | 1,358,926 | 521,790 | −62% |
 | Tool calls per attempt (mean) | 3.75 | 1.79 | −52% |
@@ -108,18 +109,30 @@ decision rule hold: 22/24 correct (the same as the baseline), and total model co
 |---|---|---|---:|---:|
 | tame-impala-spain-count-2025 | 3/3 → 3/3 | 6 → 1 | 0.314 → 0.024 | −92% |
 | tame-impala-countries-2025 | 1/3 → 3/3 | 6 → 1 | 0.297 → 0.031 | −90% |
-| rolling-stones-germany-2024 | 3/3 → 3/3 | 2 → 1 | 0.124 → 0.024 | −81% |
+| rolling-stones-germany-2024 | 0/3 → 3/3 | 2 → 1 | 0.124 → 0.024 | −81% |
 | my-dying-bride-gigs-2023-2024 | 3/3 → 3/3 | 3 → 2 | 0.069 → 0.025 | −64% |
 | unknown-artist-metallica-gangsta-rap-big-band | 3/3 → 3/3 | 3 → 3 | 0.038 → 0.023 | −39% |
 | mogwai-top-three-songs-q1-2025 | 3/3 → 1/3 | 8 → 4 | 0.764 → 0.485 | −36% |
 | genialistid-last-concert | 3/3 → 3/3 | 1 → 1 | 0.010 → 0.011 | +12% |
 | national-countries-2025 | 3/3 → 3/3 | 1 → 2 | 0.049 → 0.102 | +106% |
 
-The "Correct" columns show verdicts after the judge check below. That check changed one
-case's grading notes, so all stored answers were re-judged. Two baseline verdicts flipped,
-in cases whose notes hadn't changed: Tame Impala countries rep 0 from correct to wrong, and
-Rolling Stones rep 2 from wrong to correct. The totals stayed at 22/24 for both variants.
-Each re-judged row in `results.jsonl` keeps its previous verdict under `rejudged`.
+The "Correct" columns show verdicts after the judge check below, which led to two
+re-judges of every stored answer:
+
+1. **2026-11-24, one case's grading notes changed** (the unknown artist). Two baseline
+   verdicts flipped in cases whose notes hadn't changed, and they cancelled out: Tame Impala
+   countries rep 0 from correct to wrong, and Rolling Stones rep 2 from wrong to correct.
+   Both variants stayed at 22/24, and the decision was made on these grades.
+2. **2026-11-26, the judge prompt gained a rule:** a wrong supporting detail fails the
+   answer, even when the direct answer is right. All three baseline Rolling Stones answers
+   say the tour ended in "Ridgedale, NJ" (it's in Missouri), so the baseline fell to 19/24.
+   No v1 answer has that error. The decision rule still holds under the new grades.
+
+The baseline's three extra failures are one case repeating one false detail. A likely reason
+v1 avoids it is that with a country filter it never sees the tour's final stop, so it has
+nothing to get wrong. That is a side effect of fetching less data, not evidence that the
+model answers more carefully, so the result is best read as no loss in correctness.
+Each re-judged row in `results.jsonl` keeps its previous verdicts under `rejudged`.
 
 The savings come from the cases about one year or one country. They no longer page
 through the artist's whole history, and with a country filter, `setlists.total` answers
@@ -140,13 +153,17 @@ arguments.
 
   | Mogwai, 10 attempts each | Baseline | v1 |
   |---|---:|---:|
-  | Correct | 10/10 | 8/10 |
+  | Correct | 9/10 | 7/10 |
   | Median model $ per attempt | 0.276 | 0.148 (−46%) |
   | Median tokens | 273,094 | 89,054 |
   | Median tool calls | 7.5 | 4 |
 
-  All 7 extra v1 attempts were correct, so the only failures are the two above. A two-sided
-  Fisher exact test gives p = 0.47: no evidence that v1 hurts accuracy here, though 10
+  Under the original prompt this was 10/10 against 8/10 (p = 0.47). The 2026-11-26 re-judge
+  failed one more attempt on each side. Baseline rep 5 calls Ritchie Sacramento "fourth" at
+  22 plays, but God Gets You Back is fourth at 23: a wrong supporting detail. v1 rep 9 gets
+  every count right but ends with "the counts could be off by one or two", which the old
+  judge called borderline and passed, and the new one failed as a hedged count. A two-sided
+  Fisher exact test gives p = 0.58: no evidence that v1 hurts accuracy here, though 10
   attempts each would only reveal a large drop. The tables above stay at the 24 attempts
   the decision rule judged; the extra attempts are in both variants' `results.jsonl`, so the
   runner's summary for each now shows 31.
@@ -173,11 +190,11 @@ person's labels (2026-11-24, `claude-opus-5-5`). The files are in `judge_check/`
 The answers were labelled blind, with the same question, reference, notes and criteria the
 judge gets. The judge then graded each answer 3 times.
 
-| | Round 1 | Round 2 |
-|---|---|---|
-| Agreement with the labels (judge's majority of 3) | 16/19 | 18/19 |
-| Answers the judge passed but the labels failed | 0 | 0 |
-| Answers where the judge's 3 runs disagreed | 0/19 | 0/19 |
+| | Round 1 | Round 2 | Round 3 |
+|---|---|---|---|
+| Agreement with the labels (judge's majority of 3) | 16/19 | 18/19 | 19/19 |
+| Answers the judge passed but the labels failed | 0 | 0 | 0 |
+| Answers where the judge's 3 runs disagreed | 0/19 | 0/19 | 0/19 |
 
 **Round 1** disagreed on 3 answers, and each time the judge was stricter than the labels:
 - **The hedged count:** the grading notes say hedged counts are wrong. On a second look the
@@ -194,19 +211,32 @@ judge gets. The judge then graded each answer 3 times.
 notes (`rejudge_results.py`). The unknown-artist verdicts didn't change, since no stored
 answer reported 0. Two verdicts in other cases flipped, though their notes hadn't changed.
 Both were borderline answers:
-- The Ridgedale answer passed this time, after failing in all 7 earlier judge calls.
+- The Ridgedale answer passed this time, after failing in all 7 earlier judge calls. The
+  two other baseline Rolling Stones answers make the same error, and both passed.
 - An answer that opens with "three countries" and ends with "four countries in total"
   failed this time.
 
-**What it shows:** the judge isn't lenient. Across both rounds it never passed an answer
-the labels failed, and it caught every planted error. It is consistent on clear-cut
-answers but not on borderline ones: a single verdict on a borderline answer can go either
-way.
+**Round 3: writing down the missing rule.** The prompt only asked the judge to check the
+*direct* answer, so whether a wrong side detail fails an answer was left to the judge, and it
+went both ways on the same error. On a second look the labeller agreed with failing it,
+relabelled the Ridgedale answer as wrong, and added a rule to `JUDGE_SYSTEM` in
+`run_evals.py`: a wrong supporting detail fails the answer, while details that can't be
+checked are fine as long as the reference doesn't contradict them. With the new prompt the
+judge agreed with the labels on all 19 answers, with no disagreement between its runs, and
+the correct Mogwai answer with uncheckable per-show details still passed. All stored answers
+were then re-judged with the new prompt (see the v1 result above).
+
+**What it shows:** the judge isn't lenient. Across all three rounds it never passed an
+answer the labels failed, and it caught every planted error. Where its verdicts varied,
+the rubric hadn't said what to do: borderline answers go either way until a rule decides
+them. Checking the judge found such a gap, and writing the rule down closed it.
 
 To repeat the check: `build_labelling.py` writes `labels.md` (to fill in) and `key.json`
 (don't open it until you're done). `run_judge_check.py` runs the judge and compares, and
 `rejudge_results.py <variant>...` re-grades stored answers after notes change. Round 1's
-verdicts are in `judge_runs_round1.jsonl`.
+and round 2's verdicts are in `judge_runs_round1.jsonl` and `judge_runs_round2.jsonl`, and
+`results/<variant>/results_before_rejudge_2026-11-26.jsonl` keeps each variant's results
+from before the round 3 re-judge.
 
 ## Adding a case and its ground truth
 
