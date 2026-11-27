@@ -93,13 +93,17 @@ doesn't count: it measures evaluating, not using the tool.
 
 ### Result: adopted
 
+This section is a record of the experiment as it was decided on 2026-11-24, and it isn't
+updated when the judge changes later. Its grades are the ones the decision was made on,
+from the judge prompt of that day (before the supporting-detail rule in round 3 of the
+judge check), kept in `results/<variant>/results_before_rejudge_2026-11-26.jsonl`.
+
 v1 ran on commit `c063942`, on the same day as the baseline. Both conditions of the
-decision rule hold: 22/24 correct (the baseline scored 22/24 when the decision was made, and
-19/24 under the stricter rubric adopted later, see below), and total model cost 56% lower.
+decision rule hold: 22/24 correct (the same as the baseline), and total model cost 56% lower.
 
 | | Baseline | v1 | Change |
 |---|---:|---:|---:|
-| Correct | 19/24 | 22/24 | +3 |
+| Correct | 22/24 | 22/24 | same |
 | Model cost | $1.666 | $0.725 | −56% |
 | Model tokens | 1,358,926 | 521,790 | −62% |
 | Tool calls per attempt (mean) | 3.75 | 1.79 | −52% |
@@ -109,30 +113,18 @@ decision rule hold: 22/24 correct (the baseline scored 22/24 when the decision w
 |---|---|---|---:|---:|
 | tame-impala-spain-count-2025 | 3/3 → 3/3 | 6 → 1 | 0.314 → 0.024 | −92% |
 | tame-impala-countries-2025 | 1/3 → 3/3 | 6 → 1 | 0.297 → 0.031 | −90% |
-| rolling-stones-germany-2024 | 0/3 → 3/3 | 2 → 1 | 0.124 → 0.024 | −81% |
+| rolling-stones-germany-2024 | 3/3 → 3/3 | 2 → 1 | 0.124 → 0.024 | −81% |
 | my-dying-bride-gigs-2023-2024 | 3/3 → 3/3 | 3 → 2 | 0.069 → 0.025 | −64% |
 | unknown-artist-metallica-gangsta-rap-big-band | 3/3 → 3/3 | 3 → 3 | 0.038 → 0.023 | −39% |
 | mogwai-top-three-songs-q1-2025 | 3/3 → 1/3 | 8 → 4 | 0.764 → 0.485 | −36% |
 | genialistid-last-concert | 3/3 → 3/3 | 1 → 1 | 0.010 → 0.011 | +12% |
 | national-countries-2025 | 3/3 → 3/3 | 1 → 2 | 0.049 → 0.102 | +106% |
 
-The "Correct" columns show verdicts after the judge check below, which led to two
-re-judges of every stored answer:
-
-1. **2026-11-24, one case's grading notes changed** (the unknown artist). Two baseline
-   verdicts flipped in cases whose notes hadn't changed, and they cancelled out: Tame Impala
-   countries rep 0 from correct to wrong, and Rolling Stones rep 2 from wrong to correct.
-   Both variants stayed at 22/24, and the decision was made on these grades.
-2. **2026-11-26, the judge prompt gained a rule:** a wrong supporting detail fails the
-   answer, even when the direct answer is right. All three baseline Rolling Stones answers
-   say the tour ended in "Ridgedale, NJ" (it's in Missouri), so the baseline fell to 19/24.
-   No v1 answer has that error. The decision rule still holds under the new grades.
-
-The baseline's three extra failures are one case repeating one false detail. A likely reason
-v1 avoids it is that with a country filter it never sees the tour's final stop, so it has
-nothing to get wrong. That is a side effect of fetching less data, not evidence that the
-model answers more carefully, so the result is best read as no loss in correctness.
-Each re-judged row in `results.jsonl` keeps its previous verdicts under `rejudged`.
+The "Correct" columns show verdicts after the first round of the judge check below. That
+round changed one case's grading notes (the unknown artist), so all stored answers were
+re-judged. Two baseline verdicts flipped, in cases whose notes hadn't changed: Tame Impala
+countries rep 0 from correct to wrong, and Rolling Stones rep 2 from wrong to correct. The
+totals stayed at 22/24 for both variants.
 
 The savings come from the cases about one year or one country. They no longer page
 through the artist's whole history, and with a country filter, `setlists.total` answers
@@ -153,19 +145,15 @@ arguments.
 
   | Mogwai, 10 attempts each | Baseline | v1 |
   |---|---:|---:|
-  | Correct | 9/10 | 7/10 |
+  | Correct | 10/10 | 8/10 |
   | Median model $ per attempt | 0.276 | 0.148 (−46%) |
   | Median tokens | 273,094 | 89,054 |
   | Median tool calls | 7.5 | 4 |
 
-  Under the original prompt this was 10/10 against 8/10 (p = 0.47). The 2026-11-26 re-judge
-  failed one more attempt on each side. Baseline rep 5 calls Ritchie Sacramento "fourth" at
-  22 plays, but God Gets You Back is fourth at 23: a wrong supporting detail. v1 rep 9 gets
-  every count right but ends with "the counts could be off by one or two", which the old
-  judge called borderline and passed, and the new one failed as a hedged count. A two-sided
-  Fisher exact test gives p = 0.58: no evidence that v1 hurts accuracy here, though 10
+  All 7 extra v1 attempts were correct, so the only failures are the two above. A two-sided
+  Fisher exact test gives p = 0.47: no evidence that v1 hurts accuracy here, though 10
   attempts each would only reveal a large drop. The tables above stay at the 24 attempts
-  the decision rule judged; the extra attempts are in both variants' `results.jsonl`, so the
+  the decision rule judged; the extra attempts are in both variants' results files, so the
   runner's summary for each now shows 31.
 - **The National cost more.** setlist.fm has no 2025 shows for them, and after getting
   `total: 0` the model makes a second, unfiltered call to check. That follow-up call also
@@ -223,8 +211,15 @@ relabelled the Ridgedale answer as wrong, and added a rule to `JUDGE_SYSTEM` in
 `run_evals.py`: a wrong supporting detail fails the answer, while details that can't be
 checked are fine as long as the reference doesn't contradict them. With the new prompt the
 judge agreed with the labels on all 19 answers, with no disagreement between its runs, and
-the correct Mogwai answer with uncheckable per-show details still passed. All stored answers
-were then re-judged with the new prompt (see the v1 result above).
+the correct Mogwai answer with uncheckable per-show details still passed.
+
+All stored answers were then re-judged with the new prompt (2026-11-26), and
+`results/<variant>/results.jsonl` now holds those grades. v1 stayed at 22/24. The baseline
+fell to 19/24, because all three of its Rolling Stones answers say "Ridgedale, NJ". With a
+country filter, v1 never sees that show, so it has nothing to get wrong there. At 10 Mogwai
+attempts each it is now 9/10 against 7/10 (p = 0.58). The v1 decision rule still holds
+under these grades. The experiment record above keeps the grades it was decided on.
+Each re-judged row in `results.jsonl` keeps its previous verdicts under `rejudged`.
 
 **What it shows:** the judge isn't lenient. Across all three rounds it never passed an
 answer the labels failed, and it caught every planted error. Where its verdicts varied,
